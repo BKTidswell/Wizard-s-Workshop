@@ -65,18 +65,16 @@ function updateGrid(spellGrid, orbList)
     end
 
     for i, orb in ipairs(orbList) do
-        local gridX = math.floor((orb.x - girdXOffset) / gridSize) + 1
-        local gridY = math.floor((orb.y - girdYOffset) / gridSize) + 1
+        local gridX = math.floor((orb.x - girdXOffset + gridSize/2) / gridSize) + 1
+        local gridY = math.floor((orb.y - girdYOffset + gridSize/2) / gridSize) + 1
 
-        if gridX > gridWidth or gridX < 0 or gridY > gridHeight or gridY < 0 then
+        if gridX > gridWidth or gridX < 0 or gridY > gridHeight or gridY < 0 or spellGrid[gridX] == nil or spellGrid[gridX][gridY] == nil then
             table.remove(orbList, i)
         else 
             orbGrid[gridX][gridY] = "Orb"
         end
 
     end
-
-    print(orbGrid[4][3])
 
     for x = 1, gridWidth do
         for y = 1, gridHeight do
@@ -86,28 +84,29 @@ function updateGrid(spellGrid, orbList)
 
             if curSqr ~= nil then
                 if curSqr:is(Line) then
-                    if curSqr.kind == "hLine" and spellGrid[x-1][y] ~= nil and spellGrid[x-1][y]:is(Spawner) and curOrb == nil then
+
+                    if curSqr.kind == "hLine" and spellGrid[x-1] ~= nil and spellGrid[x-1][y] ~= nil and spellGrid[x-1][y]:is(Spawner) and orbGrid[x-1][y] == nil and curOrb == nil then
 
                         orbX = (x - 2) * gridSize + girdXOffset
                         orbY = (y - 1) * gridSize + girdYOffset
 
                         table.insert(orbTable, Orb:new(orbX, orbY, curSqr.dx, curSqr.dy, "red", redCirc))
 
-                    elseif curSqr.kind == "hLine" and spellGrid[x+1][y] ~= nil and spellGrid[x+1][y]:is(Spawner) and curOrb == nil  then
+                    elseif curSqr.kind == "hLine" and spellGrid[x+1] ~= nil and spellGrid[x+1][y] ~= nil and spellGrid[x+1][y]:is(Spawner) and orbGrid[x+1][y] == nil and curOrb == nil  then
 
                         orbX = (x) * gridSize + girdXOffset
                         orbY = (y - 1) * gridSize + girdYOffset
 
                         table.insert(orbTable, Orb:new(orbX, orbY, -1*curSqr.dx, curSqr.dy, "red", redCirc))
 
-                    elseif curSqr.kind == "vLine" and spellGrid[x][y-1] ~= nil and spellGrid[x][y-1]:is(Spawner) and curOrb == nil  then
+                    elseif curSqr.kind == "vLine" and spellGrid[x][y-1] ~= nil and spellGrid[x][y-1]:is(Spawner) and orbGrid[x][y-1] == nil and curOrb == nil  then
 
                         orbX = (x - 1) * gridSize + girdXOffset
                         orbY = (y - 2) * gridSize + girdYOffset
 
                         table.insert(orbTable, Orb:new(orbX, orbY, curSqr.dx, curSqr.dy, "red", redCirc))
 
-                    elseif curSqr.kind == "vLine" and spellGrid[x][y+1] ~= nil and spellGrid[x][y+1]:is(Spawner) and curOrb == nil  then
+                    elseif curSqr.kind == "vLine" and spellGrid[x][y+1] ~= nil and spellGrid[x][y+1]:is(Spawner) and orbGrid[x][y+1] == nil and curOrb == nil  then
 
                         orbX = (x - 1) * gridSize + girdXOffset
                         orbY = (y) * gridSize + girdYOffset
@@ -136,11 +135,13 @@ function love.update(dt)
         heldSquare.y = love.mouse.getY()
     end
 
-    dtotal = dtotal + dt
-    if dtotal > 1 then
-      dtotal = dtotal - 1
-      updateGrid(spellArray, orbTable)
-   end
+    updateGrid(spellArray, orbTable)
+
+   --  dtotal = dtotal + dt
+   --  if dtotal > 1 then
+   --    dtotal = dtotal - 1
+   --    updateGrid(spellArray, orbTable)
+   -- end
 end
 
 function love.draw()

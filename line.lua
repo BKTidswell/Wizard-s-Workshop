@@ -26,6 +26,9 @@ function Line:draw()
     love.graphics.draw(self.img, self.x, self.y)
 end
 
+function Line:rotate()
+end
+
 function Line:is(Type)
     local mt = getmetatable(self)
     if mt == Type then
