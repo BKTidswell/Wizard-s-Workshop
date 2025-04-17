@@ -1,10 +1,10 @@
 
 -- orb.lua
 
-Line = {}
-Line.__index = Line
+Arrow = {}
+Arrow.__index = Arrow
 
-function Line:new(x, y, dx, dy, kind, img)
+function Arrow:new(x, y, dx, dy, kind, img, angle)
     local obj = setmetatable({}, self)
     obj.x = x
     obj.y = y
@@ -12,21 +12,28 @@ function Line:new(x, y, dx, dy, kind, img)
     obj.dy = dy
     obj.kind = kind
     obj.img = img
+    obj.angle = 0
 
     return obj
 end
 
 -- Methods
-function Line:move()
+function Arrow:move()
     self.x = self.x + self.dx * love.timer.getDelta()
     self.y = self.y + self.dy * love.timer.getDelta()
 end
 
-function Line:draw()
-    love.graphics.draw(self.img, self.x, self.y, 1.571)
+function Arrow:draw()
+    love.graphics.draw(self.img, self.x, self.y, self.angle * math.pi / 180)
 end
 
-function Line:is(Type)
+function Arrow:rotate()
+    self.dx = 
+    self.dy = 
+    self.angle = (self.angle + 90) % 360
+end
+
+function Arrow:is(Type)
     local mt = getmetatable(self)
     if mt == Type then
         return true

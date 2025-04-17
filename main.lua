@@ -9,6 +9,7 @@ function love.load()
     redCirc = love.graphics.newImage("red_circ.png")
     hLine = love.graphics.newImage("h_line.png")
     vLine = love.graphics.newImage("v_line.png")
+    cLine = love.graphics.newImage("c_line.png")
 
     orbTable = {}
 
@@ -51,8 +52,19 @@ function love.load()
     }
 
     heldSquare = nil
+    isDraggingLine = false
+    dragStartGrid = nil
 end
 
+function math.sign(x)
+    if x > 0 then return 1
+    elseif x < 0 then return -1
+    else return 0 end
+end
+
+function safeChecker(grid, x, y, obj)
+    return grid[x] and grid[x][y] and grid[x][y]:is(obj)
+end
 
 function updateGrid(spellGrid, orbList)
     local orbGrid = {}
@@ -72,6 +84,12 @@ function updateGrid(spellGrid, orbList)
             table.remove(orbList, i)
         else 
             orbGrid[gridX][gridY] = "Orb"
+            curSqr = spellGrid[gridX][gridY]
+
+            if curSqr:is(Line) then
+                orb.dx = curSqr.dx
+                orb.dy = curSqr.dy
+            end
         end
 
     end
@@ -211,6 +229,64 @@ function love.mousepressed(x, y, button)
                     break
                 end
             end
+
+            local gridX = math.floor((x - girdXOffset) / gridSize) + 1
+            local gridY = math.floor((y - girdYOffset) / gridSize) + 1
+
+            if gridX >= 1 and gridX <= gridWidth and gridY >= 1 and gridY <= gridHeight then
+                dragLastGrid = {x = gridX, y = gridY, lastLine = nil}
+                isDraggingLine = true
+            end
+
+            
+
         end
     end
+end
+
+function love.mousemoved(x, y, dx, dy, istouch)
+
+    local gridX = math.floor((x - girdXOffset) / gridSize) + 1
+    local gridY = math.floor((y - girdYOffset) / gridSize) + 1
+
+    if gridX >= 0 and gridX <= gridWidth+1 and gridY >= 0 and gridY <= gridHeight+1 and isDraggingLine and dragLastGrid then
+
+        lastX = dragLastGrid.x
+        lastY = dragLastGrid.y
+        lastLine = dragLastGrid.lastLine
+
+        if gridX ~= lastX or gridY ~= lastY then
+
+            -- Check which way we are dragging the line
+            -- First we do horizontal 
+            if gridY == lastY and not safeChecker(spellArray, lastX, lastY, Spawner) and lastLine ~= "vLine" then
+                spellArray[lastX][lastY] = Line:new((lastX-1) * gridSize + girdXOffset, 
+                                                    (lastY-1) * gridSize + girdYOffset,
+                                                    100, 0, "hLine", hLine)
+                dragLastGrid = {x = gridX, y = gridY, lastLine = "hLine"}
+
+            -- -- Then vertical
+            elseif gridX == lastX and not safeChecker(spellArray, lastX, lastY, Spawner) and lastLine ~= "hLine" then
+                print(lastX,lastY,lastLine)
+
+                spellArray[lastX][lastY] = Line:new((lastX-1) * gridSize + girdXOffset, 
+                                                    (lastY-1) * gridSize + girdYOffset,
+                                                    0, 100, "vLine", vLine)
+                dragLastGrid = {x = gridX, y = gridY, lastLine = "vLine"}
+
+            -- -- Then we check for curved
+            elseif gridX == lastX and not safeChecker(spellArray, lastX, lastY, Spawner) then
+                spellArray[lastX][lastY] = Line:new((lastX-1) * gridSize + girdXOffset, 
+                                                    (lastY-1) * gridSize + girdYOffset,
+                                                    100, 100, "cLine", cLine)
+                dragLastGrid = {x = gridX, y = gridY, lastLine = "cLine"}
+            end
+
+        end
+    end
+end
+
+function love.mousereleased(x, y, button)
+    dragLastGrid = nil
+    isDraggingLine = false
 end
