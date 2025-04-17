@@ -3,16 +3,24 @@
 require "orb"
 require "line"
 require "spawner"
+require "cauldron"
 
 function love.load()
+    resetGame()
+end
+
+function resetGame()
     redSqr = love.graphics.newImage("red_sqr.png")
     redCirc = love.graphics.newImage("red_circ.png")
+    greenCirc = love.graphics.newImage("green_circ.png")  -- Add green square image
     hLine = love.graphics.newImage("h_line.png")
     vLine = love.graphics.newImage("v_line.png")
 
     orbTable = {}
+    score = 0  -- Initialize score
 
-    -- newOrb = Orb:new(200, 200, 200, 100, "red", redCirc)
+    -- Create a larger font for the score
+    scoreFont = love.graphics.newFont(36)  -- 36 is the font size
 
     windowWidth = 1000
     windowHeight = 800
@@ -40,9 +48,20 @@ function love.load()
         end
     end
 
+    -- Add red spawner at position (3,3)
     spellArray[3][3] = Spawner:new((3 - 1) * gridSize + girdXOffset, 
                                    (3 - 1) * gridSize + girdYOffset,
                                    "red", redSqr)
+                                   
+    -- Add green spawner at position (5,3)
+    spellArray[5][3] = Spawner:new((5 - 1) * gridSize + girdXOffset,
+                                   (3 - 1) * gridSize + girdYOffset,
+                                   "green", greenCirc)
+
+    -- Add cauldron at position (10,3)
+    spellArray[10][3] = Cauldron:new((10 - 1) * gridSize + girdXOffset,
+                                   (3 - 1) * gridSize + girdYOffset,
+                                   nil)
 
     -- Create a list of free red squares to place
     squarePool = {
@@ -64,16 +83,23 @@ function updateGrid(spellGrid, orbList)
         end
     end
 
-    for i, orb in ipairs(orbList) do
+    -- Check for orb collisions with cauldron
+    for i = #orbList, 1, -1 do
+        local orb = orbList[i]
         local gridX = math.floor((orb.x - girdXOffset + gridSize/2) / gridSize) + 1
         local gridY = math.floor((orb.y - girdYOffset + gridSize/2) / gridSize) + 1
 
         if gridX > gridWidth or gridX < 0 or gridY > gridHeight or gridY < 0 or spellGrid[gridX] == nil or spellGrid[gridX][gridY] == nil then
             table.remove(orbList, i)
         else 
-            orbGrid[gridX][gridY] = "Orb"
+            -- Check if orb is on a cauldron
+            if spellGrid[gridX][gridY]:is(Cauldron) then
+                table.remove(orbList, i)
+                score = score + 1  -- Increment score when orb is absorbed
+            else
+                orbGrid[gridX][gridY] = "Orb"
+            end
         end
-
     end
 
     for x = 1, gridWidth do
@@ -89,29 +115,37 @@ function updateGrid(spellGrid, orbList)
 
                         orbX = (x - 2) * gridSize + girdXOffset
                         orbY = (y - 1) * gridSize + girdYOffset
+                        local spawnerKind = spellGrid[x-1][y].kind
+                        local orbImage = spawnerKind == "red" and redCirc or greenCirc
 
-                        table.insert(orbTable, Orb:new(orbX, orbY, curSqr.dx, curSqr.dy, "red", redCirc))
+                        table.insert(orbTable, Orb:new(orbX, orbY, curSqr.dx, curSqr.dy, spawnerKind, orbImage))
 
                     elseif curSqr.kind == "hLine" and spellGrid[x+1] ~= nil and spellGrid[x+1][y] ~= nil and spellGrid[x+1][y]:is(Spawner) and orbGrid[x+1][y] == nil and curOrb == nil  then
 
                         orbX = (x) * gridSize + girdXOffset
                         orbY = (y - 1) * gridSize + girdYOffset
+                        local spawnerKind = spellGrid[x+1][y].kind
+                        local orbImage = spawnerKind == "red" and redCirc or greenCirc
 
-                        table.insert(orbTable, Orb:new(orbX, orbY, -1*curSqr.dx, curSqr.dy, "red", redCirc))
+                        table.insert(orbTable, Orb:new(orbX, orbY, -1*curSqr.dx, curSqr.dy, spawnerKind, orbImage))
 
                     elseif curSqr.kind == "vLine" and spellGrid[x][y-1] ~= nil and spellGrid[x][y-1]:is(Spawner) and orbGrid[x][y-1] == nil and curOrb == nil  then
 
                         orbX = (x - 1) * gridSize + girdXOffset
                         orbY = (y - 2) * gridSize + girdYOffset
+                        local spawnerKind = spellGrid[x][y-1].kind
+                        local orbImage = spawnerKind == "red" and redCirc or greenCirc
 
-                        table.insert(orbTable, Orb:new(orbX, orbY, curSqr.dx, curSqr.dy, "red", redCirc))
+                        table.insert(orbTable, Orb:new(orbX, orbY, curSqr.dx, curSqr.dy, spawnerKind, orbImage))
 
                     elseif curSqr.kind == "vLine" and spellGrid[x][y+1] ~= nil and spellGrid[x][y+1]:is(Spawner) and orbGrid[x][y+1] == nil and curOrb == nil  then
 
                         orbX = (x - 1) * gridSize + girdXOffset
                         orbY = (y) * gridSize + girdYOffset
+                        local spawnerKind = spellGrid[x][y+1].kind
+                        local orbImage = spawnerKind == "red" and redCirc or greenCirc
 
-                        table.insert(orbTable, Orb:new(orbX, orbY, curSqr.dx, -1*curSqr.dy, "red", redCirc))
+                        table.insert(orbTable, Orb:new(orbX, orbY, curSqr.dx, -1*curSqr.dy, spawnerKind, orbImage))
                     end
                 end
             end
@@ -181,6 +215,15 @@ function love.draw()
         orb:draw()
     end
 
+    -- Draw score
+    love.graphics.setColor(0, 0, 0)  -- Black color for text
+    local scoreText = "Score: " .. score
+    local defaultFont = love.graphics.getFont()  -- Store the default font
+    love.graphics.setFont(scoreFont)  -- Set the larger font
+    local textWidth = love.graphics.getFont():getWidth(scoreText)
+    love.graphics.print(scoreText, (windowWidth - textWidth) / 2, 20)  -- Center horizontally and vertically
+    love.graphics.setColor(1, 1, 1)  -- Reset color to white
+    love.graphics.setFont(defaultFont)  -- Reset to default font
 end
 
 function love.mousepressed(x, y, button)
@@ -212,5 +255,11 @@ function love.mousepressed(x, y, button)
                 end
             end
         end
+    end
+end
+
+function love.keypressed(key)
+    if key == "r" then
+        resetGame()
     end
 end
