@@ -12,7 +12,8 @@ function Arrow:new(x, y, dx, dy, kind, img, angle)
     obj.dy = dy
     obj.kind = kind
     obj.img = img
-    obj.angle = 0
+    obj.angle = angle
+    obj.rotations = angle//90
 
     return obj
 end
@@ -28,9 +29,19 @@ function Arrow:draw()
 end
 
 function Arrow:rotate()
-    self.dx = 
-    self.dy = 
     self.angle = (self.angle + 90) % 360
+
+    rads = self.angle * math.pi / 180
+
+    if self.kind == "arrow" then
+        self.dx = math.cos(rads)*100 -- 100, 0, -100, 0
+        self.dy = math.sin(rads)*100 -- 0, 100, 0, -100
+
+    elseif self.kind == "cArrow1" then
+        self.dx = math.cos(rads)*100 -- 100, 100, -100, -100
+        self.dy = math.sin(rads)*100 -- -100, 100, 100, -100
+    end
+
 end
 
 function Arrow:is(Type)

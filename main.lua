@@ -46,18 +46,18 @@ function love.load()
                                    "red", redSqr)
 
     -- Create a list of free red squares to place
-    squarePool = {
-        Line:new(100, 425, 100, 0, "hLine", hLine),
-        Line:new(100, 500, 0, 100, "vLine", vLine)
-    }
+    -- squarePool = {
+    --     Line:new(100, 425, 100, 0, "hLine", hLine),
+    --     Line:new(100, 500, 0, 100, "vLine", vLine)
+    -- }
 
-    heldSquare = nil
+    -- heldSquare = nil
     isDraggingLine = false
     dragStartGrid = nil
 end
 
 function math.sign(x)
-    if x > 0 then return 1
+    if x >= 0 then return 1
     elseif x < 0 then return -1
     else return 0 end
 end
@@ -87,8 +87,8 @@ function updateGrid(spellGrid, orbList)
             curSqr = spellGrid[gridX][gridY]
 
             if curSqr:is(Line) then
-                orb.dx = curSqr.dx
-                orb.dy = curSqr.dy
+                orb.dx = curSqr.dx * math.sign(orb.dx)
+                orb.dy = curSqr.dy * math.sign(orb.dy)
             end
         end
 
@@ -183,11 +183,11 @@ function love.draw()
         end
     end
 
-    -- Draw free squares
-    for _, square in ipairs(squarePool) do
-        love.graphics.setColor(255,255,255,255)
-        love.graphics.draw(square.img, square.x, square.y)
-    end
+    -- -- Draw free squares
+    -- for _, square in ipairs(squarePool) do
+    --     love.graphics.setColor(255,255,255,255)
+    --     love.graphics.draw(square.img, square.x, square.y)
+    -- end
 
     -- Draw held square
     if heldSquare then
@@ -203,32 +203,32 @@ end
 
 function love.mousepressed(x, y, button)
     if button == 1 then -- Left mouse button
-        if heldSquare then
-            -- Place the held square onto the grid
+        -- if heldSquare then
+        --     -- Place the held square onto the grid
 
-            local gridX = math.floor((x - girdXOffset) / gridSize) + 1
-            local gridY = math.floor((y - girdYOffset) / gridSize) + 1
+        --     local gridX = math.floor((x - girdXOffset) / gridSize) + 1
+        --     local gridY = math.floor((y - girdYOffset) / gridSize) + 1
 
-            if gridX >= 1 and gridX <= gridWidth and gridY >= 1 and gridY <= gridHeight then
-                if spellArray[gridX][gridY] == nil then
-                    spellArray[gridX][gridY] = heldSquare
-                    spellArray[gridX][gridY].x = (gridX-1) * gridSize + girdXOffset
-                    spellArray[gridX][gridY].y = (gridY-1) * gridSize + girdYOffset
+        --     if gridX >= 1 and gridX <= gridWidth and gridY >= 1 and gridY <= gridHeight then
+        --         if spellArray[gridX][gridY] == nil then
+        --             spellArray[gridX][gridY] = heldSquare
+        --             spellArray[gridX][gridY].x = (gridX-1) * gridSize + girdXOffset
+        --             spellArray[gridX][gridY].y = (gridY-1) * gridSize + girdYOffset
 
-                    heldSquare = nil
-                end
-            end
-        else
-            -- Pick up a free square if clicked on one
-            for i, square in ipairs(squarePool) do
-                if x > square.x - gridSize and x < square.x + gridSize and y > square.y - gridSize and y < square.y + gridSize then
-                    heldSquare = {x = squarePool[i].x, y = squarePool[i].y, img = squarePool[i].img}
-                    heldSquare = Line:new(squarePool[i].x, squarePool[i].y, 
-                                          squarePool[i].dx, squarePool[i].dy,
-                                          squarePool[i].kind, squarePool[i].img)
-                    break
-                end
-            end
+        --             heldSquare = nil
+        --         end
+        --     end
+        -- else
+            -- -- Pick up a free square if clicked on one
+            -- for i, square in ipairs(squarePool) do
+            --     if x > square.x - gridSize and x < square.x + gridSize and y > square.y - gridSize and y < square.y + gridSize then
+            --         heldSquare = {x = squarePool[i].x, y = squarePool[i].y, img = squarePool[i].img}
+            --         heldSquare = Line:new(squarePool[i].x, squarePool[i].y, 
+            --                               squarePool[i].dx, squarePool[i].dy,
+            --                               squarePool[i].kind, squarePool[i].img)
+            --         break
+            --     end
+            -- end
 
             local gridX = math.floor((x - girdXOffset) / gridSize) + 1
             local gridY = math.floor((y - girdYOffset) / gridSize) + 1
@@ -240,7 +240,7 @@ function love.mousepressed(x, y, button)
 
             
 
-        end
+    --     end
     end
 end
 
@@ -281,10 +281,10 @@ function love.mousemoved(x, y, dx, dy, istouch)
                                                     100, 100, "cLine", cLine)
                 dragLastGrid = {x = gridX, y = gridY, lastLine = "cLine"}
             end
-
         end
     end
 end
+
 
 function love.mousereleased(x, y, button)
     dragLastGrid = nil

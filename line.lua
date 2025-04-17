@@ -23,7 +23,7 @@ function Line:move()
 end
 
 function Line:draw()
-    love.graphics.draw(self.img, self.x, self.y, 1.571)
+    love.graphics.draw(self.img, self.x, self.y)
 end
 
 function Line:is(Type)
