@@ -45,15 +45,12 @@ function love.load()
                                    (3 - 1) * gridSize + girdYOffset,
                                    "red", redSqr)
 
-    -- Create a list of free red squares to place
-    -- squarePool = {
-    --     Line:new(100, 425, 100, 0, "hLine", hLine),
-    --     Line:new(100, 500, 0, 100, "vLine", vLine)
-    -- }
-
-    -- heldSquare = nil
     isDraggingLine = false
     dragStartGrid = nil
+end
+
+function myround(x, base)
+    return base * math.floor(x/base)
 end
 
 function math.sign(x)
@@ -82,6 +79,10 @@ function updateGrid(spellGrid, orbList)
 
         if gridX > gridWidth or gridX < 0 or gridY > gridHeight or gridY < 0 or spellGrid[gridX] == nil or spellGrid[gridX][gridY] == nil then
             table.remove(orbList, i)
+        elseif orb.lastSqr == "hLine" and spellGrid[gridX][gridY]:is(Line) and spellGrid[gridX][gridY].kind == "vLine" then
+            table.remove(orbList, i)
+        elseif orb.lastSqr == "vLine" and spellGrid[gridX][gridY]:is(Line) and spellGrid[gridX][gridY].kind == "hLine" then
+            table.remove(orbList, i)
         else 
             orbGrid[gridX][gridY] = "Orb"
             curSqr = spellGrid[gridX][gridY]
@@ -89,10 +90,12 @@ function updateGrid(spellGrid, orbList)
             if curSqr:is(Line) and curSqr.kind ~= "cLine" then
                 orb.dx = curSqr.dx * math.sign(orb.dx)
                 orb.dy = curSqr.dy * math.sign(orb.dy)
+                orb.lastSqr = curSqr.kind
 
             elseif curSqr:is(Line) and curSqr.kind == "cLine" then
                 orb.dx = curSqr.dx
                 orb.dy = curSqr.dy
+                orb.lastSqr = curSqr.kind
             end
         end
 
@@ -107,33 +110,33 @@ function updateGrid(spellGrid, orbList)
             if curSqr ~= nil then
                 if curSqr:is(Line) then
 
-                    if curSqr.kind == "hLine" and spellGrid[x-1] ~= nil and spellGrid[x-1][y] ~= nil and spellGrid[x-1][y]:is(Spawner) and orbGrid[x-1][y] == nil and curOrb == nil then
+                    if curSqr.kind == "hLine" and safeChecker(spellGrid, x-1, y, Spawner) and orbGrid[x-1][y] == nil and curOrb == nil then
 
                         orbX = (x - 2) * gridSize + girdXOffset
                         orbY = (y - 1) * gridSize + girdYOffset
 
-                        table.insert(orbTable, Orb:new(orbX, orbY, curSqr.dx, curSqr.dy, "red", redCirc))
+                        table.insert(orbTable, Orb:new(orbX, orbY, curSqr.dx, curSqr.dy, "spawner", "red", redCirc))
 
-                    elseif curSqr.kind == "hLine" and spellGrid[x+1] ~= nil and spellGrid[x+1][y] ~= nil and spellGrid[x+1][y]:is(Spawner) and orbGrid[x+1][y] == nil and curOrb == nil  then
+                    elseif curSqr.kind == "hLine" and safeChecker(spellGrid, x+1, y, Spawner) and orbGrid[x+1][y] == nil and curOrb == nil  then
 
                         orbX = (x) * gridSize + girdXOffset
                         orbY = (y - 1) * gridSize + girdYOffset
 
-                        table.insert(orbTable, Orb:new(orbX, orbY, -1*curSqr.dx, curSqr.dy, "red", redCirc))
+                        table.insert(orbTable, Orb:new(orbX, orbY, -1*curSqr.dx, curSqr.dy, "spawner", "red", redCirc))
 
-                    elseif curSqr.kind == "vLine" and spellGrid[x][y-1] ~= nil and spellGrid[x][y-1]:is(Spawner) and orbGrid[x][y-1] == nil and curOrb == nil  then
+                    elseif curSqr.kind == "vLine" and safeChecker(spellGrid, x, y-1, Spawner) and orbGrid[x][y-1] == nil and curOrb == nil  then
 
                         orbX = (x - 1) * gridSize + girdXOffset
                         orbY = (y - 2) * gridSize + girdYOffset
 
-                        table.insert(orbTable, Orb:new(orbX, orbY, curSqr.dx, curSqr.dy, "red", redCirc))
+                        table.insert(orbTable, Orb:new(orbX, orbY, curSqr.dx, curSqr.dy, "spawner", "red", redCirc))
 
-                    elseif curSqr.kind == "vLine" and spellGrid[x][y+1] ~= nil and spellGrid[x][y+1]:is(Spawner) and orbGrid[x][y+1] == nil and curOrb == nil  then
+                    elseif curSqr.kind == "vLine" and safeChecker(spellGrid, x, y+1, Spawner) and orbGrid[x][y+1] == nil and curOrb == nil  then
 
                         orbX = (x - 1) * gridSize + girdXOffset
                         orbY = (y) * gridSize + girdYOffset
 
-                        table.insert(orbTable, Orb:new(orbX, orbY, curSqr.dx, -1*curSqr.dy, "red", redCirc))
+                        table.insert(orbTable, Orb:new(orbX, orbY, curSqr.dx, -1*curSqr.dy, "spawner", "red", redCirc))
                     end
                 end
             end
@@ -237,11 +240,15 @@ function love.mousemoved(x, y, dx, dy, istouch)
                                                     180, 100, 100, "cLine", cLine)
                 dragLastGrid = {x = gridX, y = gridY, xDir = gridX-lastX, yDir = gridY-lastY, lastLine = "cLine"}
 
+                print("Made Type 1")
+
             elseif gridX == lastX and gridY > lastY and xDir < 0 and not safeChecker(spellArray, lastX, lastY, Spawner) then
                 spellArray[lastX][lastY] = Line:new((lastX-1) * gridSize + girdXOffset + gridSize/2, 
                                                     (lastY-1) * gridSize + girdYOffset + gridSize/2,
-                                                    90, 100, 100, "cLine", cLine)
+                                                    90, -100, 100, "cLine", cLine)
                 dragLastGrid = {x = gridX, y = gridY, xDir = gridX-lastX, yDir = gridY-lastY, lastLine = "cLine"}
+
+                print("Made Type 2")
 
             elseif gridX == lastX and gridY < lastY and xDir > 0 and not safeChecker(spellArray, lastX, lastY, Spawner) then
                 spellArray[lastX][lastY] = Line:new((lastX-1) * gridSize + girdXOffset + gridSize/2, 
@@ -249,17 +256,23 @@ function love.mousemoved(x, y, dx, dy, istouch)
                                                     270, 100, -100, "cLine", cLine)
                 dragLastGrid = {x = gridX, y = gridY, xDir = gridX-lastX, yDir = gridY-lastY, lastLine = "cLine"}
 
+                print("Made Type 3")
+
             elseif gridX == lastX and gridY < lastY and xDir < 0 and not safeChecker(spellArray, lastX, lastY, Spawner) then
                 spellArray[lastX][lastY] = Line:new((lastX-1) * gridSize + girdXOffset + gridSize/2, 
                                                     (lastY-1) * gridSize + girdYOffset + gridSize/2,
-                                                    0, 100, -100, "cLine", cLine)
+                                                    0, -100, -100, "cLine", cLine)
                 dragLastGrid = {x = gridX, y = gridY, xDir = gridX-lastX, yDir = gridY-lastY, lastLine = "cLine"}
+
+                print("Made Type 4")
 
             elseif gridY == lastY and gridX > lastX and yDir > 0 and not safeChecker(spellArray, lastX, lastY, Spawner) then
                 spellArray[lastX][lastY] = Line:new((lastX-1) * gridSize + girdXOffset + gridSize/2, 
                                                     (lastY-1) * gridSize + girdYOffset + gridSize/2,
-                                                    0, 100, -100, "cLine", cLine)
+                                                    0, 100, 100, "cLine", cLine)
                 dragLastGrid = {x = gridX, y = gridY, xDir = gridX-lastX, yDir = gridY-lastY, lastLine = "cLine"}
+
+                print("Made Type 5")
 
             elseif gridY == lastY and gridX > lastX and yDir < 0 and not safeChecker(spellArray, lastX, lastY, Spawner) then
                 spellArray[lastX][lastY] = Line:new((lastX-1) * gridSize + girdXOffset + gridSize/2, 
@@ -267,17 +280,23 @@ function love.mousemoved(x, y, dx, dy, istouch)
                                                     90, 100, -100, "cLine", cLine)
                 dragLastGrid = {x = gridX, y = gridY, xDir = gridX-lastX, yDir = gridY-lastY, lastLine = "cLine"}
 
+                print("Made Type 6")
+
             elseif gridY == lastY and gridX < lastX and yDir > 0 and not safeChecker(spellArray, lastX, lastY, Spawner) then
                 spellArray[lastX][lastY] = Line:new((lastX-1) * gridSize + girdXOffset + gridSize/2, 
                                                     (lastY-1) * gridSize + girdYOffset + gridSize/2,
-                                                    270, -100, -100, "cLine", cLine)
+                                                    270, -100, 100, "cLine", cLine)
                 dragLastGrid = {x = gridX, y = gridY, xDir = gridX-lastX, yDir = gridY-lastY, lastLine = "cLine"}
+
+                print("Made Type 7")
 
             elseif gridY == lastY and gridX < lastX and yDir < 0 and not safeChecker(spellArray, lastX, lastY, Spawner) then
                 spellArray[lastX][lastY] = Line:new((lastX-1) * gridSize + girdXOffset + gridSize/2, 
                                                     (lastY-1) * gridSize + girdYOffset + gridSize/2,
                                                     180, -100, -100, "cLine", cLine)
                 dragLastGrid = {x = gridX, y = gridY, xDir = gridX-lastX, yDir = gridY-lastY, lastLine = "cLine"}    
+
+                print("Made Type 8")
             end
         end
     end
