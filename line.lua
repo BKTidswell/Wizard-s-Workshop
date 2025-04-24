@@ -4,7 +4,7 @@
 Line = {}
 Line.__index = Line
 
-function Line:new(x, y, dx, dy, kind, img)
+function Line:new(x, y, angle, dx, dy, kind, img)
     local obj = setmetatable({}, self)
     obj.x = x
     obj.y = y
@@ -12,6 +12,7 @@ function Line:new(x, y, dx, dy, kind, img)
     obj.dy = dy
     obj.kind = kind
     obj.img = img
+    obj.rads = angle / 180 * math.pi
 
     return obj
 end
@@ -23,7 +24,7 @@ function Line:move()
 end
 
 function Line:draw()
-    love.graphics.draw(self.img, self.x, self.y)
+    love.graphics.draw(self.img, self.x, self.y, self.rads, 1, 1, 32, 32)
 end
 
 function Line:is(Type)

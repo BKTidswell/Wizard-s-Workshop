@@ -260,25 +260,25 @@ function love.mousemoved(x, y, dx, dy, istouch)
             -- Check which way we are dragging the line
             -- First we do horizontal 
             if gridY == lastY and not safeChecker(spellArray, lastX, lastY, Spawner) and lastLine ~= "vLine" then
-                spellArray[lastX][lastY] = Line:new((lastX-1) * gridSize + girdXOffset, 
-                                                    (lastY-1) * gridSize + girdYOffset,
-                                                    100, 0, "hLine", hLine)
+                spellArray[lastX][lastY] = Line:new((lastX-1) * gridSize + girdXOffset + gridSize/2, 
+                                                    (lastY-1) * gridSize + girdYOffset + gridSize/2,
+                                                    0, 100, 0, "hLine", hLine)
                 dragLastGrid = {x = gridX, y = gridY, lastLine = "hLine"}
 
             -- -- Then vertical
             elseif gridX == lastX and not safeChecker(spellArray, lastX, lastY, Spawner) and lastLine ~= "hLine" then
                 print(lastX,lastY,lastLine)
 
-                spellArray[lastX][lastY] = Line:new((lastX-1) * gridSize + girdXOffset, 
-                                                    (lastY-1) * gridSize + girdYOffset,
-                                                    0, 100, "vLine", vLine)
+                spellArray[lastX][lastY] = Line:new((lastX-1) * gridSize + girdXOffset + gridSize/2, 
+                                                    (lastY-1) * gridSize + girdYOffset + gridSize/2,
+                                                    0, 0, 100, "vLine", vLine)
                 dragLastGrid = {x = gridX, y = gridY, lastLine = "vLine"}
 
             -- -- Then we check for curved
             elseif gridX == lastX and not safeChecker(spellArray, lastX, lastY, Spawner) then
-                spellArray[lastX][lastY] = Line:new((lastX-1) * gridSize + girdXOffset, 
-                                                    (lastY-1) * gridSize + girdYOffset,
-                                                    100, 100, "cLine", cLine)
+                spellArray[lastX][lastY] = Line:new((lastX-1) * gridSize + girdXOffset + gridSize/2, 
+                                                    (lastY-1) * gridSize + girdYOffset + gridSize/2,
+                                                    180, 100, 100, "cLine", cLine)
                 dragLastGrid = {x = gridX, y = gridY, lastLine = "cLine"}
             end
         end
