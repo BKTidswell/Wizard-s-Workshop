@@ -139,9 +139,6 @@ function updateGrid(spellGrid, orbList)
             end
         end
     end
-
-    -- return spellGrid
-
 end
 
 dtotal = 0
@@ -158,12 +155,6 @@ function love.update(dt)
     end
 
     updateGrid(spellArray, orbTable)
-
-   --  dtotal = dtotal + dt
-   --  if dtotal > 1 then
-   --    dtotal = dtotal - 1
-   --    updateGrid(spellArray, orbTable)
-   -- end
 end
 
 function love.draw()
@@ -182,16 +173,9 @@ function love.draw()
             if spellArray[x][y] ~= nil then
                 love.graphics.setColor(255,255,255,255)
                 spellArray[x][y]:draw()
-                -- love.graphics.draw(spellArray[x][y], (x-1) * gridSize + girdXOffset, (y-1) * gridSize + girdYOffset)
             end
         end
     end
-
-    -- -- Draw free squares
-    -- for _, square in ipairs(squarePool) do
-    --     love.graphics.setColor(255,255,255,255)
-    --     love.graphics.draw(square.img, square.x, square.y)
-    -- end
 
     -- Draw held square
     if heldSquare then
@@ -214,10 +198,6 @@ function love.mousepressed(x, y, button)
                 dragLastGrid = {x = gridX, y = gridY, xDir = 0, yDir = 0, lastLine = nil}
                 isDraggingLine = true
             end
-
-            
-
-    --     end
     end
 end
 
