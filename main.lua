@@ -86,9 +86,13 @@ function updateGrid(spellGrid, orbList)
             orbGrid[gridX][gridY] = "Orb"
             curSqr = spellGrid[gridX][gridY]
 
-            if curSqr:is(Line) then
+            if curSqr:is(Line) and curSqr.kind ~= "cLine" then
                 orb.dx = curSqr.dx * math.sign(orb.dx)
                 orb.dy = curSqr.dy * math.sign(orb.dy)
+
+            elseif curSqr:is(Line) and curSqr.kind == "cLine" then
+                orb.dx = curSqr.dx
+                orb.dy = curSqr.dy
             end
         end
 
@@ -234,7 +238,7 @@ function love.mousepressed(x, y, button)
             local gridY = math.floor((y - girdYOffset) / gridSize) + 1
 
             if gridX >= 1 and gridX <= gridWidth and gridY >= 1 and gridY <= gridHeight then
-                dragLastGrid = {x = gridX, y = gridY, lastLine = nil}
+                dragLastGrid = {x = gridX, y = gridY, xDir = 0, yDir = 0, lastLine = nil}
                 isDraggingLine = true
             end
 
@@ -253,33 +257,74 @@ function love.mousemoved(x, y, dx, dy, istouch)
 
         lastX = dragLastGrid.x
         lastY = dragLastGrid.y
+        xDir = dragLastGrid.xDir
+        yDir = dragLastGrid.yDir
         lastLine = dragLastGrid.lastLine
 
         if gridX ~= lastX or gridY ~= lastY then
-
             -- Check which way we are dragging the line
             -- First we do horizontal 
-            if gridY == lastY and not safeChecker(spellArray, lastX, lastY, Spawner) and lastLine ~= "vLine" then
+            if gridY == lastY and yDir == 0 and not safeChecker(spellArray, lastX, lastY, Spawner) and lastLine ~= "vLine" then
                 spellArray[lastX][lastY] = Line:new((lastX-1) * gridSize + girdXOffset + gridSize/2, 
                                                     (lastY-1) * gridSize + girdYOffset + gridSize/2,
                                                     0, 100, 0, "hLine", hLine)
-                dragLastGrid = {x = gridX, y = gridY, lastLine = "hLine"}
+                dragLastGrid = {x = gridX, y = gridY, xDir = gridX-lastX, yDir = gridY-lastY, lastLine = "hLine"}
 
             -- -- Then vertical
-            elseif gridX == lastX and not safeChecker(spellArray, lastX, lastY, Spawner) and lastLine ~= "hLine" then
-                print(lastX,lastY,lastLine)
-
+            elseif gridX == lastX and xDir == 0 and not safeChecker(spellArray, lastX, lastY, Spawner) and lastLine ~= "hLine" then
                 spellArray[lastX][lastY] = Line:new((lastX-1) * gridSize + girdXOffset + gridSize/2, 
                                                     (lastY-1) * gridSize + girdYOffset + gridSize/2,
                                                     0, 0, 100, "vLine", vLine)
-                dragLastGrid = {x = gridX, y = gridY, lastLine = "vLine"}
+                dragLastGrid = {x = gridX, y = gridY, xDir = gridX-lastX, yDir = gridY-lastY, lastLine = "vLine"}
 
             -- -- Then we check for curved
-            elseif gridX == lastX and not safeChecker(spellArray, lastX, lastY, Spawner) then
+            elseif gridX == lastX and gridY > lastY and xDir > 0 and not safeChecker(spellArray, lastX, lastY, Spawner) then
                 spellArray[lastX][lastY] = Line:new((lastX-1) * gridSize + girdXOffset + gridSize/2, 
                                                     (lastY-1) * gridSize + girdYOffset + gridSize/2,
                                                     180, 100, 100, "cLine", cLine)
-                dragLastGrid = {x = gridX, y = gridY, lastLine = "cLine"}
+                dragLastGrid = {x = gridX, y = gridY, xDir = gridX-lastX, yDir = gridY-lastY, lastLine = "cLine"}
+
+            elseif gridX == lastX and gridY > lastY and xDir < 0 and not safeChecker(spellArray, lastX, lastY, Spawner) then
+                spellArray[lastX][lastY] = Line:new((lastX-1) * gridSize + girdXOffset + gridSize/2, 
+                                                    (lastY-1) * gridSize + girdYOffset + gridSize/2,
+                                                    90, 100, 100, "cLine", cLine)
+                dragLastGrid = {x = gridX, y = gridY, xDir = gridX-lastX, yDir = gridY-lastY, lastLine = "cLine"}
+
+            elseif gridX == lastX and gridY < lastY and xDir > 0 and not safeChecker(spellArray, lastX, lastY, Spawner) then
+                spellArray[lastX][lastY] = Line:new((lastX-1) * gridSize + girdXOffset + gridSize/2, 
+                                                    (lastY-1) * gridSize + girdYOffset + gridSize/2,
+                                                    270, 100, -100, "cLine", cLine)
+                dragLastGrid = {x = gridX, y = gridY, xDir = gridX-lastX, yDir = gridY-lastY, lastLine = "cLine"}
+
+            elseif gridX == lastX and gridY < lastY and xDir < 0 and not safeChecker(spellArray, lastX, lastY, Spawner) then
+                spellArray[lastX][lastY] = Line:new((lastX-1) * gridSize + girdXOffset + gridSize/2, 
+                                                    (lastY-1) * gridSize + girdYOffset + gridSize/2,
+                                                    0, 100, -100, "cLine", cLine)
+                dragLastGrid = {x = gridX, y = gridY, xDir = gridX-lastX, yDir = gridY-lastY, lastLine = "cLine"}
+
+            elseif gridY == lastY and gridX > lastX and yDir > 0 and not safeChecker(spellArray, lastX, lastY, Spawner) then
+                spellArray[lastX][lastY] = Line:new((lastX-1) * gridSize + girdXOffset + gridSize/2, 
+                                                    (lastY-1) * gridSize + girdYOffset + gridSize/2,
+                                                    0, 100, -100, "cLine", cLine)
+                dragLastGrid = {x = gridX, y = gridY, xDir = gridX-lastX, yDir = gridY-lastY, lastLine = "cLine"}
+
+            elseif gridY == lastY and gridX > lastX and yDir < 0 and not safeChecker(spellArray, lastX, lastY, Spawner) then
+                spellArray[lastX][lastY] = Line:new((lastX-1) * gridSize + girdXOffset + gridSize/2, 
+                                                    (lastY-1) * gridSize + girdYOffset + gridSize/2,
+                                                    90, 100, -100, "cLine", cLine)
+                dragLastGrid = {x = gridX, y = gridY, xDir = gridX-lastX, yDir = gridY-lastY, lastLine = "cLine"}
+
+            elseif gridY == lastY and gridX < lastX and yDir > 0 and not safeChecker(spellArray, lastX, lastY, Spawner) then
+                spellArray[lastX][lastY] = Line:new((lastX-1) * gridSize + girdXOffset + gridSize/2, 
+                                                    (lastY-1) * gridSize + girdYOffset + gridSize/2,
+                                                    270, -100, -100, "cLine", cLine)
+                dragLastGrid = {x = gridX, y = gridY, xDir = gridX-lastX, yDir = gridY-lastY, lastLine = "cLine"}
+
+            elseif gridY == lastY and gridX < lastX and yDir < 0 and not safeChecker(spellArray, lastX, lastY, Spawner) then
+                spellArray[lastX][lastY] = Line:new((lastX-1) * gridSize + girdXOffset + gridSize/2, 
+                                                    (lastY-1) * gridSize + girdYOffset + gridSize/2,
+                                                    180, -100, -100, "cLine", cLine)
+                dragLastGrid = {x = gridX, y = gridY, xDir = gridX-lastX, yDir = gridY-lastY, lastLine = "cLine"}    
             end
         end
     end
