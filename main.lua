@@ -10,14 +10,14 @@ function love.load()
 end
 
 function resetGame()
-    redSqr = love.graphics.newImage("red_sqr.png")
-    greenSqr = love.graphics.newImage("green_sqr.png")
-    redCirc = love.graphics.newImage("red_circ.png")
-    greenCirc = love.graphics.newImage("green_circ.png")
-    cauldron = love.graphics.newImage("cauldron.png")
-    hLine = love.graphics.newImage("h_line.png")
-    vLine = love.graphics.newImage("v_line.png")
-    cLine = love.graphics.newImage("c_line.png")
+    redSqr = love.graphics.newImage("imgs/red_sqr.png")
+    greenSqr = love.graphics.newImage("imgs/green_sqr.png")
+    redCirc = love.graphics.newImage("imgs/red_circ.png")
+    greenCirc = love.graphics.newImage("imgs/green_circ.png")
+    cauldron = love.graphics.newImage("imgs/cauldron.png")
+    hLine = love.graphics.newImage("imgs/h_line.png")
+    vLine = love.graphics.newImage("imgs/v_line.png")
+    cLine = love.graphics.newImage("imgs/c_line.png")
 
     orbTable = {}
     score = 0  -- Initialize score
@@ -265,21 +265,21 @@ function love.mousemoved(x, y, dx, dy, istouch)
         if gridX ~= lastX or gridY ~= lastY then
             -- Check which way we are dragging the line
             -- First we do horizontal 
-            if gridY == lastY and yDir == 0 and not safeChecker(spellArray, lastX, lastY, Spawner) and lastLine ~= "vLine" then
+            if gridY == lastY and yDir == 0 and not safeChecker(spellArray, lastX, lastY, Spawner) and not safeChecker(spellArray, lastX, lastY, Cauldron) and lastLine ~= "vLine" then
                 spellArray[lastX][lastY] = Line:new((lastX-1) * gridSize + girdXOffset + gridSize/2, 
                                                     (lastY-1) * gridSize + girdYOffset + gridSize/2,
                                                     0, 100, 0, "hLine", hLine)
                 dragLastGrid = {x = gridX, y = gridY, xDir = gridX-lastX, yDir = gridY-lastY, lastLine = "hLine"}
 
             -- -- Then vertical
-            elseif gridX == lastX and xDir == 0 and not safeChecker(spellArray, lastX, lastY, Spawner) and lastLine ~= "hLine" then
+            elseif gridX == lastX and xDir == 0 and not safeChecker(spellArray, lastX, lastY, Spawner) and not safeChecker(spellArray, lastX, lastY, Cauldron) and lastLine ~= "hLine" then
                 spellArray[lastX][lastY] = Line:new((lastX-1) * gridSize + girdXOffset + gridSize/2, 
                                                     (lastY-1) * gridSize + girdYOffset + gridSize/2,
                                                     0, 0, 100, "vLine", vLine)
                 dragLastGrid = {x = gridX, y = gridY, xDir = gridX-lastX, yDir = gridY-lastY, lastLine = "vLine"}
 
             -- -- Then we check for curved
-            elseif gridX == lastX and gridY > lastY and xDir > 0 and not safeChecker(spellArray, lastX, lastY, Spawner) then
+            elseif gridX == lastX and gridY > lastY and xDir > 0 and not safeChecker(spellArray, lastX, lastY, Spawner) and not safeChecker(spellArray, lastX, lastY, Cauldron) then
                 spellArray[lastX][lastY] = Line:new((lastX-1) * gridSize + girdXOffset + gridSize/2, 
                                                     (lastY-1) * gridSize + girdYOffset + gridSize/2,
                                                     180, 100, 100, "cLine", cLine)
@@ -287,7 +287,7 @@ function love.mousemoved(x, y, dx, dy, istouch)
 
                 print("Made Type 1")
 
-            elseif gridX == lastX and gridY > lastY and xDir < 0 and not safeChecker(spellArray, lastX, lastY, Spawner) then
+            elseif gridX == lastX and gridY > lastY and xDir < 0 and not safeChecker(spellArray, lastX, lastY, Spawner) and not safeChecker(spellArray, lastX, lastY, Cauldron) then
                 spellArray[lastX][lastY] = Line:new((lastX-1) * gridSize + girdXOffset + gridSize/2, 
                                                     (lastY-1) * gridSize + girdYOffset + gridSize/2,
                                                     90, -100, 100, "cLine", cLine)
@@ -295,7 +295,7 @@ function love.mousemoved(x, y, dx, dy, istouch)
 
                 print("Made Type 2")
 
-            elseif gridX == lastX and gridY < lastY and xDir > 0 and not safeChecker(spellArray, lastX, lastY, Spawner) then
+            elseif gridX == lastX and gridY < lastY and xDir > 0 and not safeChecker(spellArray, lastX, lastY, Spawner) and not safeChecker(spellArray, lastX, lastY, Cauldron) then
                 spellArray[lastX][lastY] = Line:new((lastX-1) * gridSize + girdXOffset + gridSize/2, 
                                                     (lastY-1) * gridSize + girdYOffset + gridSize/2,
                                                     270, 100, -100, "cLine", cLine)
@@ -303,7 +303,7 @@ function love.mousemoved(x, y, dx, dy, istouch)
 
                 print("Made Type 3")
 
-            elseif gridX == lastX and gridY < lastY and xDir < 0 and not safeChecker(spellArray, lastX, lastY, Spawner) then
+            elseif gridX == lastX and gridY < lastY and xDir < 0 and not safeChecker(spellArray, lastX, lastY, Spawner) and not safeChecker(spellArray, lastX, lastY, Cauldron) then
                 spellArray[lastX][lastY] = Line:new((lastX-1) * gridSize + girdXOffset + gridSize/2, 
                                                     (lastY-1) * gridSize + girdYOffset + gridSize/2,
                                                     0, -100, -100, "cLine", cLine)
@@ -311,7 +311,7 @@ function love.mousemoved(x, y, dx, dy, istouch)
 
                 print("Made Type 4")
 
-            elseif gridY == lastY and gridX > lastX and yDir > 0 and not safeChecker(spellArray, lastX, lastY, Spawner) then
+            elseif gridY == lastY and gridX > lastX and yDir > 0 and not safeChecker(spellArray, lastX, lastY, Spawner) and not safeChecker(spellArray, lastX, lastY, Cauldron) then
                 spellArray[lastX][lastY] = Line:new((lastX-1) * gridSize + girdXOffset + gridSize/2, 
                                                     (lastY-1) * gridSize + girdYOffset + gridSize/2,
                                                     0, 100, 100, "cLine", cLine)
@@ -319,7 +319,7 @@ function love.mousemoved(x, y, dx, dy, istouch)
 
                 print("Made Type 5")
 
-            elseif gridY == lastY and gridX > lastX and yDir < 0 and not safeChecker(spellArray, lastX, lastY, Spawner) then
+            elseif gridY == lastY and gridX > lastX and yDir < 0 and not safeChecker(spellArray, lastX, lastY, Spawner) and not safeChecker(spellArray, lastX, lastY, Cauldron) then
                 spellArray[lastX][lastY] = Line:new((lastX-1) * gridSize + girdXOffset + gridSize/2, 
                                                     (lastY-1) * gridSize + girdYOffset + gridSize/2,
                                                     90, 100, -100, "cLine", cLine)
@@ -327,7 +327,7 @@ function love.mousemoved(x, y, dx, dy, istouch)
 
                 print("Made Type 6")
 
-            elseif gridY == lastY and gridX < lastX and yDir > 0 and not safeChecker(spellArray, lastX, lastY, Spawner) then
+            elseif gridY == lastY and gridX < lastX and yDir > 0 and not safeChecker(spellArray, lastX, lastY, Spawner) and not safeChecker(spellArray, lastX, lastY, Cauldron) then
                 spellArray[lastX][lastY] = Line:new((lastX-1) * gridSize + girdXOffset + gridSize/2, 
                                                     (lastY-1) * gridSize + girdYOffset + gridSize/2,
                                                     270, -100, 100, "cLine", cLine)
@@ -335,7 +335,7 @@ function love.mousemoved(x, y, dx, dy, istouch)
 
                 print("Made Type 7")
 
-            elseif gridY == lastY and gridX < lastX and yDir < 0 and not safeChecker(spellArray, lastX, lastY, Spawner) then
+            elseif gridY == lastY and gridX < lastX and yDir < 0 and not safeChecker(spellArray, lastX, lastY, Spawner) and not safeChecker(spellArray, lastX, lastY, Cauldron) then
                 spellArray[lastX][lastY] = Line:new((lastX-1) * gridSize + girdXOffset + gridSize/2, 
                                                     (lastY-1) * gridSize + girdYOffset + gridSize/2,
                                                     180, -100, -100, "cLine", cLine)
