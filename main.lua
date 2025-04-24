@@ -207,33 +207,6 @@ end
 
 function love.mousepressed(x, y, button)
     if button == 1 then -- Left mouse button
-        -- if heldSquare then
-        --     -- Place the held square onto the grid
-
-        --     local gridX = math.floor((x - girdXOffset) / gridSize) + 1
-        --     local gridY = math.floor((y - girdYOffset) / gridSize) + 1
-
-        --     if gridX >= 1 and gridX <= gridWidth and gridY >= 1 and gridY <= gridHeight then
-        --         if spellArray[gridX][gridY] == nil then
-        --             spellArray[gridX][gridY] = heldSquare
-        --             spellArray[gridX][gridY].x = (gridX-1) * gridSize + girdXOffset
-        --             spellArray[gridX][gridY].y = (gridY-1) * gridSize + girdYOffset
-
-        --             heldSquare = nil
-        --         end
-        --     end
-        -- else
-            -- -- Pick up a free square if clicked on one
-            -- for i, square in ipairs(squarePool) do
-            --     if x > square.x - gridSize and x < square.x + gridSize and y > square.y - gridSize and y < square.y + gridSize then
-            --         heldSquare = {x = squarePool[i].x, y = squarePool[i].y, img = squarePool[i].img}
-            --         heldSquare = Line:new(squarePool[i].x, squarePool[i].y, 
-            --                               squarePool[i].dx, squarePool[i].dy,
-            --                               squarePool[i].kind, squarePool[i].img)
-            --         break
-            --     end
-            -- end
-
             local gridX = math.floor((x - girdXOffset) / gridSize) + 1
             local gridY = math.floor((y - girdYOffset) / gridSize) + 1
 
