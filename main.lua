@@ -6,7 +6,9 @@ require "spawner"
 
 function love.load()
     redSqr = love.graphics.newImage("red_sqr.png")
+    greenSqr = love.graphics.newImage("green_sqr.png")
     redCirc = love.graphics.newImage("red_circ.png")
+    greenCirc = love.graphics.newImage("green_circ.png")
     hLine = love.graphics.newImage("h_line.png")
     vLine = love.graphics.newImage("v_line.png")
     cLine = love.graphics.newImage("c_line.png")
@@ -23,7 +25,7 @@ function love.load()
 
     gridSize = 64
     gridWidth = 10
-    gridHeight = 5
+    gridHeight = 9
 
     girdXOffset = (windowWidth - gridSize*gridWidth) / 2
     girdYOffset = (windowHeight - gridSize*gridHeight) / 4
@@ -44,6 +46,10 @@ function love.load()
     spellArray[3][3] = Spawner:new((3 - 1) * gridSize + girdXOffset, 
                                    (3 - 1) * gridSize + girdYOffset,
                                    "red", redSqr)
+
+    spellArray[3][7] = Spawner:new((3 - 1) * gridSize + girdXOffset, 
+                                   (7 - 1) * gridSize + girdYOffset,
+                                   "green", greenSqr)
 
     isDraggingLine = false
     dragStartGrid = nil
@@ -115,28 +121,28 @@ function updateGrid(spellGrid, orbList)
                         orbX = (x - 2) * gridSize + girdXOffset
                         orbY = (y - 1) * gridSize + girdYOffset
 
-                        table.insert(orbTable, Orb:new(orbX, orbY, curSqr.dx, curSqr.dy, "spawner", "red", redCirc))
+                        orbTable = spellGrid[x-1][y]:addOrb(orbX, orbY, curSqr.dx, curSqr.dy,orbTable)
 
                     elseif curSqr.kind == "hLine" and safeChecker(spellGrid, x+1, y, Spawner) and orbGrid[x+1][y] == nil and curOrb == nil  then
 
                         orbX = (x) * gridSize + girdXOffset
                         orbY = (y - 1) * gridSize + girdYOffset
 
-                        table.insert(orbTable, Orb:new(orbX, orbY, -1*curSqr.dx, curSqr.dy, "spawner", "red", redCirc))
+                        orbTable = spellGrid[x+1][y]:addOrb(orbX, orbY, -1*curSqr.dx, curSqr.dy,orbTable)
 
                     elseif curSqr.kind == "vLine" and safeChecker(spellGrid, x, y-1, Spawner) and orbGrid[x][y-1] == nil and curOrb == nil  then
 
                         orbX = (x - 1) * gridSize + girdXOffset
                         orbY = (y - 2) * gridSize + girdYOffset
 
-                        table.insert(orbTable, Orb:new(orbX, orbY, curSqr.dx, curSqr.dy, "spawner", "red", redCirc))
+                        orbTable = spellGrid[x][y-1]:addOrb(orbX, orbY, curSqr.dx, curSqr.dy,orbTable)
 
                     elseif curSqr.kind == "vLine" and safeChecker(spellGrid, x, y+1, Spawner) and orbGrid[x][y+1] == nil and curOrb == nil  then
 
                         orbX = (x - 1) * gridSize + girdXOffset
                         orbY = (y) * gridSize + girdYOffset
 
-                        table.insert(orbTable, Orb:new(orbX, orbY, curSqr.dx, -1*curSqr.dy, "spawner", "red", redCirc))
+                        orbTable = spellGrid[x][y+1]:addOrb(orbX, orbY, curSqr.dx, -1*curSqr.dy,orbTable)
                     end
                 end
             end
