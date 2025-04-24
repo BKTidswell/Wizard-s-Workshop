@@ -8,13 +8,18 @@ function Cauldron:new(x, y, img)
     obj.x = x
     obj.y = y
     obj.img = img
+
+    obj.valueTbl = {red = 1, green = 2}
+
     return obj
 end
 
 function Cauldron:draw()
-    love.graphics.setColor(0, 0, 0) -- Black color
-    love.graphics.circle("fill", self.x + gridSize/2, self.y + gridSize/2, gridSize/2)
-    love.graphics.setColor(1, 1, 1) -- Reset color to white
+    love.graphics.draw(self.img, self.x, self.y)
+end
+
+function Cauldron:returnValue(orbType)
+    return self.valueTbl[orbType]
 end
 
 function Cauldron:is(Type)

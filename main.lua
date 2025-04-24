@@ -14,6 +14,7 @@ function resetGame()
     greenSqr = love.graphics.newImage("green_sqr.png")
     redCirc = love.graphics.newImage("red_circ.png")
     greenCirc = love.graphics.newImage("green_circ.png")
+    cauldron = love.graphics.newImage("cauldron.png")
     hLine = love.graphics.newImage("h_line.png")
     vLine = love.graphics.newImage("v_line.png")
     cLine = love.graphics.newImage("c_line.png")
@@ -55,19 +56,14 @@ function resetGame()
                                    (3 - 1) * gridSize + girdYOffset,
                                    "red", redSqr)
                                    
-    -- Add green spawner at position (5,3)
-    spellArray[5][3] = Spawner:new((5 - 1) * gridSize + girdXOffset,
-                                   (3 - 1) * gridSize + girdYOffset,
-                                   "green", greenCirc)
-
-    -- Add cauldron at position (10,3)
-    spellArray[10][3] = Cauldron:new((10 - 1) * gridSize + girdXOffset,
-                                   (3 - 1) * gridSize + girdYOffset,
-                                   nil)
-
     spellArray[3][7] = Spawner:new((3 - 1) * gridSize + girdXOffset, 
                                    (7 - 1) * gridSize + girdYOffset,
                                    "green", greenSqr)
+
+    -- Add cauldron at position (10,3)
+    spellArray[9][5] = Cauldron:new((9 - 1) * gridSize + girdXOffset,
+                                   (5 - 1) * gridSize + girdYOffset,
+                                   cauldron)
 
     isDraggingLine = false
     dragStartGrid = nil
@@ -105,23 +101,30 @@ function updateGrid(spellGrid, orbList)
 
         if gridX > gridWidth or gridX < 0 or gridY > gridHeight or gridY < 0 or spellGrid[gridX] == nil or spellGrid[gridX][gridY] == nil then
             table.remove(orbList, i)
-        elseif orb.lastSqr == "hLine" and spellGrid[gridX][gridY]:is(Line) and spellGrid[gridX][gridY].kind == "vLine" then
-            table.remove(orbList, i)
-        elseif orb.lastSqr == "vLine" and spellGrid[gridX][gridY]:is(Line) and spellGrid[gridX][gridY].kind == "hLine" then
-            table.remove(orbList, i)
-        else 
-            orbGrid[gridX][gridY] = "Orb"
+        else
             curSqr = spellGrid[gridX][gridY]
 
-            if curSqr:is(Line) and curSqr.kind ~= "cLine" then
-                orb.dx = curSqr.dx * math.sign(orb.dx)
-                orb.dy = curSqr.dy * math.sign(orb.dy)
-                orb.lastSqr = curSqr.kind
+            if orb.lastSqr == "hLine" and curSqr:is(Line) and curSqr.kind == "vLine" then
+                table.remove(orbList, i)
+            elseif orb.lastSqr == "vLine" and curSqr:is(Line) and curSqr.kind == "hLine" then
+                table.remove(orbList, i)
+            elseif curSqr:is(Cauldron) then
+                score = score + curSqr:returnValue(orb.kind)
+                table.remove(orbList, i)
+            else 
+                orbGrid[gridX][gridY] = "Orb"
+                
 
-            elseif curSqr:is(Line) and curSqr.kind == "cLine" then
-                orb.dx = curSqr.dx
-                orb.dy = curSqr.dy
-                orb.lastSqr = curSqr.kind
+                if curSqr:is(Line) and curSqr.kind ~= "cLine" then
+                    orb.dx = curSqr.dx * math.sign(orb.dx)
+                    orb.dy = curSqr.dy * math.sign(orb.dy)
+                    orb.lastSqr = curSqr.kind
+
+                elseif curSqr:is(Line) and curSqr.kind == "cLine" then
+                    orb.dx = curSqr.dx
+                    orb.dy = curSqr.dy
+                    orb.lastSqr = curSqr.kind
+                end
             end
         end
     end

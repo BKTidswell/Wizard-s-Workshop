@@ -15,7 +15,6 @@ function Spawner:new(x, y, kind, img)
 end
 
 function Spawner:addOrb(x, y, dx, dy, oTable)
-    print(self.kind)
     if self.kind == "red" then
         table.insert(oTable, Orb:new(x, y, dx, dy, "spawner", "red", redCirc))
         return oTable
