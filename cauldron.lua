@@ -22,6 +22,10 @@ function Cauldron:returnValue(orbType)
     return self.valueTbl[orbType]
 end
 
+function Cauldron:Iam()
+    return "Cauldron"
+end
+
 function Cauldron:is(Type)
     local mt = getmetatable(self)
     if mt == Type then

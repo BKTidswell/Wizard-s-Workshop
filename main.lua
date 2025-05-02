@@ -20,6 +20,7 @@ function resetGame()
     cLine = love.graphics.newImage("imgs/c_line.png")
 
     orbTable = {}
+    lineTable = {}
     score = 0  -- Initialize score
 
     -- Create a larger font for the score
@@ -40,14 +41,11 @@ function resetGame()
 
     -- Create a grid to hold squares
     spellArray = {}
-    blankOrbArray = {}
 
     for x = 1, gridWidth do
         spellArray[x] = {}
-        blankOrbArray[x] = {}
         for y = 1, gridHeight do
             spellArray[x][y] = nil
-            blankOrbArray[x][y] = nil
         end
     end
 
@@ -83,15 +81,7 @@ function safeChecker(grid, x, y, obj)
     return grid[x] and grid[x][y] and grid[x][y]:is(obj)
 end
 
-function updateGrid(spellGrid, orbList)
-    local orbGrid = {}
-
-    for x = 1, gridWidth do
-        orbGrid[x] = {}
-        for y = 1, gridHeight do
-            orbGrid[x][y] = nil
-        end
-    end
+function updateGrid(spellGrid, orbGrid, orbList)
 
     -- Check for orb collisions with cauldron
     for i = #orbList, 1, -1 do
@@ -113,7 +103,6 @@ function updateGrid(spellGrid, orbList)
                 table.remove(orbList, i)
             else 
                 orbGrid[gridX][gridY] = "Orb"
-                
 
                 if curSqr:is(Line) and curSqr.kind ~= "cLine" then
                     orb.dx = curSqr.dx * math.sign(orb.dx)
@@ -128,56 +117,32 @@ function updateGrid(spellGrid, orbList)
             end
         end
     end
+end
+
+function updateOrbGrid(orbList, spellGrid)
+
+    local orbOut = {}
 
     for x = 1, gridWidth do
+        orbOut[x] = {}
         for y = 1, gridHeight do
-
-            curSqr = spellGrid[x][y]
-            curOrb = orbGrid[x][y]
-
-            if curSqr ~= nil then
-                if curSqr:is(Line) then
-
-                    if curSqr.kind == "hLine" and safeChecker(spellGrid, x-1, y, Spawner) and orbGrid[x-1][y] == nil and curOrb == nil then
-
-                        orbX = (x - 2) * gridSize + girdXOffset
-                        orbY = (y - 1) * gridSize + girdYOffset
-                        local spawnerKind = spellGrid[x-1][y].kind
-                        local orbImage = spawnerKind == "red" and redCirc or greenCirc
-
-                        orbTable = spellGrid[x-1][y]:addOrb(orbX, orbY, curSqr.dx, curSqr.dy,orbTable)
-
-                    elseif curSqr.kind == "hLine" and safeChecker(spellGrid, x+1, y, Spawner) and orbGrid[x+1][y] == nil and curOrb == nil  then
-
-                        orbX = (x) * gridSize + girdXOffset
-                        orbY = (y - 1) * gridSize + girdYOffset
-                        local spawnerKind = spellGrid[x+1][y].kind
-                        local orbImage = spawnerKind == "red" and redCirc or greenCirc
-
-                        orbTable = spellGrid[x+1][y]:addOrb(orbX, orbY, -1*curSqr.dx, curSqr.dy,orbTable)
-
-                    elseif curSqr.kind == "vLine" and safeChecker(spellGrid, x, y-1, Spawner) and orbGrid[x][y-1] == nil and curOrb == nil  then
-
-                        orbX = (x - 1) * gridSize + girdXOffset
-                        orbY = (y - 2) * gridSize + girdYOffset
-                        local spawnerKind = spellGrid[x][y-1].kind
-                        local orbImage = spawnerKind == "red" and redCirc or greenCirc
-
-                        orbTable = spellGrid[x][y-1]:addOrb(orbX, orbY, curSqr.dx, curSqr.dy,orbTable)
-
-                    elseif curSqr.kind == "vLine" and safeChecker(spellGrid, x, y+1, Spawner) and orbGrid[x][y+1] == nil and curOrb == nil  then
-
-                        orbX = (x - 1) * gridSize + girdXOffset
-                        orbY = (y) * gridSize + girdYOffset
-                        local spawnerKind = spellGrid[x][y+1].kind
-                        local orbImage = spawnerKind == "red" and redCirc or greenCirc
-
-                        orbTable = spellGrid[x][y+1]:addOrb(orbX, orbY, curSqr.dx, -1*curSqr.dy,orbTable)
-                    end
-                end
-            end
+            orbOut[x][y] = nil
         end
     end
+
+    for i = #orbList, 1, -1 do
+        local orb = orbList[i]
+        local gridX = math.floor((orb.x - girdXOffset + gridSize/2) / gridSize) + 1
+        local gridY = math.floor((orb.y - girdYOffset + gridSize/2) / gridSize) + 1
+
+        if gridX > gridWidth or gridX < 0 or gridY > gridHeight or gridY < 0 or spellGrid[gridX] == nil or spellGrid[gridX][gridY] == nil then
+            table.remove(orbList, i)
+        else
+            orbOut[gridX][gridY] = i
+        end
+    end
+
+    return orbOut
 end
 
 dtotal = 0
@@ -187,13 +152,17 @@ function love.update(dt)
         orb:move()
     end
 
+    orbArray = updateOrbGrid(orbTable, spellArray)
+
+    for _, line in ipairs(lineTable) do
+        line:checkSqrs(spellArray, orbArray, orbTable)
+    end
+
     if heldSquare then
         -- Follow mouse if holding a square
         heldSquare.x = love.mouse.getX()
         heldSquare.y = love.mouse.getY()
     end
-
-    updateGrid(spellArray, orbTable)
 end
 
 function love.draw()
@@ -269,6 +238,8 @@ function love.mousemoved(x, y, dx, dy, istouch)
                 spellArray[lastX][lastY] = Line:new((lastX-1) * gridSize + girdXOffset + gridSize/2, 
                                                     (lastY-1) * gridSize + girdYOffset + gridSize/2,
                                                     0, 100, 0, "hLine", hLine)
+                 table.insert(lineTable, spellArray[lastX][lastY])
+
                 dragLastGrid = {x = gridX, y = gridY, xDir = gridX-lastX, yDir = gridY-lastY, lastLine = "hLine"}
 
             -- -- Then vertical
@@ -276,6 +247,8 @@ function love.mousemoved(x, y, dx, dy, istouch)
                 spellArray[lastX][lastY] = Line:new((lastX-1) * gridSize + girdXOffset + gridSize/2, 
                                                     (lastY-1) * gridSize + girdYOffset + gridSize/2,
                                                     0, 0, 100, "vLine", vLine)
+                table.insert(lineTable, spellArray[lastX][lastY])
+
                 dragLastGrid = {x = gridX, y = gridY, xDir = gridX-lastX, yDir = gridY-lastY, lastLine = "vLine"}
 
             -- -- Then we check for curved

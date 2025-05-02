@@ -21,12 +21,6 @@ end
 function Orb:move()
     self.x = self.x + self.dx * love.timer.getDelta()
     self.y = self.y + self.dy * love.timer.getDelta()
-
-    -- if self.dx == 0 then
-    --     self.x = myround(self.x - girdXOffset, gridSize) + girdXOffset
-    -- elseif self.dy == 0 then
-    --     self.y = myround(self.y - girdYOffset, gridSize) + girdYOffset
-    -- end
 end
 
 function Orb:draw()
