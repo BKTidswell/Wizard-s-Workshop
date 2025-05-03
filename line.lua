@@ -4,29 +4,39 @@
 Line = {}
 Line.__index = Line
 
-function Line:new(x, y, angle, dx, dy, kind, img)
+function Line:new(x, y, angle, kind, img)
     local obj = setmetatable({}, self)
     obj.x = x
     obj.y = y
     obj.gridX = math.floor((x - girdXOffset) / gridSize) + 1
     obj.gridY = math.floor((y - girdYOffset) / gridSize) + 1
-    obj.dx = dx
-    obj.dy = dy
     obj.kind = kind
     obj.img = img
     obj.rads = angle / 180 * math.pi
 
     if kind == "hLine" then
+        obj.dx = -1*baseSpeed
+        obj.dy = 0
         obj.toCheck = {{x=-1, y=0},{x=1, y=0}}
     elseif kind == "vLine" then
+        obj.dx = 0
+        obj.dy = -1*baseSpeed
         obj.toCheck = {{x=0, y=-1},{x=0, y=1}}
     elseif kind == "cLine" and angle == 0 then
+        obj.dx = -1*baseSpeed
+        obj.dy = -1*baseSpeed
         obj.toCheck = {{x=0, y=-1},{x=1, y=0}}
     elseif kind == "cLine" and angle == 90 then
+        obj.dx = baseSpeed
+        obj.dy = -1 * baseSpeed
         obj.toCheck = {{x=0, y=1},{x=1, y=0}}
     elseif kind == "cLine" and angle == 180 then
+        obj.dx = baseSpeed
+        obj.dy = baseSpeed
         obj.toCheck = {{x=-1, y=0},{x=0, y=1}}
     elseif kind == "cLine" and angle == 270 then
+        obj.dx = baseSpeed
+        obj.dy = -1 * baseSpeed
         obj.toCheck = {{x=-1, y=0},{x=0, y=-1}}
     else
         print("Uh Oh")
@@ -61,7 +71,7 @@ function Line:checkSqrs(spellGrid, orbGrid, orbTable)
                 orbX = (checkX - 1) * gridSize + girdXOffset
                 orbY = (checkY - 1) * gridSize + girdYOffset
 
-                orbTable = spellGrid[checkX][checkY]:addOrb(orbX, orbY, self.dx * -1 * locs.x, self.dy * -1 * locs.y, orbTable)
+                orbTable = spellGrid[checkX][checkY]:addOrb(orbX, orbY, self.dx*locs.x + self.dx*(locs.x+1), self.dy*locs.y + self.dy*(locs.y+1), orbTable)
             end
         end
     end
