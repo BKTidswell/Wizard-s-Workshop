@@ -93,43 +93,16 @@ function cLineAngle(x1, y1, x2, y2)
     return angle
 end
 
-function updateGrid(spellGrid, orbGrid, orbList)
-
-    -- Check for orb collisions with cauldron
-    for i = #orbList, 1, -1 do
-        local orb = orbList[i]
-        local gridX = math.floor((orb.x - girdXOffset + gridSize/2) / gridSize) + 1
-        local gridY = math.floor((orb.y - girdYOffset + gridSize/2) / gridSize) + 1
-
-        if gridX > gridWidth or gridX < 0 or gridY > gridHeight or gridY < 0 or spellGrid[gridX] == nil or spellGrid[gridX][gridY] == nil then
-            table.remove(orbList, i)
-        else
-            curSqr = spellGrid[gridX][gridY]
-
-            if orb.lastSqr == "hLine" and curSqr:is(Line) and curSqr.kind == "vLine" then
-                table.remove(orbList, i)
-            elseif orb.lastSqr == "vLine" and curSqr:is(Line) and curSqr.kind == "hLine" then
-                table.remove(orbList, i)
-            elseif curSqr:is(Cauldron) then
-                score = score + curSqr:returnValue(orb.kind)
-                table.remove(orbList, i)
-            else 
-                orbGrid[gridX][gridY] = "Orb"
-
-                if curSqr:is(Line) and curSqr.kind ~= "cLine" then
-                    orb.dx = curSqr.dx * math.sign(orb.dx)
-                    orb.dy = curSqr.dy * math.sign(orb.dy)
-                    orb.lastSqr = curSqr.kind
-
-                elseif curSqr:is(Line) and curSqr.kind == "cLine" then
-                    orb.dx = curSqr.dx
-                    orb.dy = curSqr.dy
-                    orb.lastSqr = curSqr.kind
-                end
-            end
+function in_tbl(tbl, x)
+    found = false
+    for _, v in pairs(tbl) do
+        if v == x then 
+            found = true 
         end
     end
+    return found
 end
+
 
 function updateOrbGrid(orbList, spellGrid)
 
@@ -149,8 +122,11 @@ function updateOrbGrid(orbList, spellGrid)
 
         if gridX > gridWidth or gridX < 0 or gridY > gridHeight or gridY < 0 or spellGrid[gridX] == nil or spellGrid[gridX][gridY] == nil then
             table.remove(orbList, i)
+        elseif orbOut[gridX] and orbOut[gridX][gridY] then
+            orb.x = -2*gridSize
+            orb.y = -2*gridSize
         else
-            orbOut[gridX][gridY] = i
+            orbOut[gridX][gridY] = orbList[i]
         end
     end
 
@@ -167,7 +143,11 @@ function love.update(dt)
     orbArray = updateOrbGrid(orbTable, spellArray)
 
     for _, line in ipairs(lineTable) do
-        line:checkSqrs(spellArray, orbArray, orbTable)
+        line:spawnOrbs(spellArray, orbArray, orbTable)
+    end
+
+    for _, line in ipairs(lineTable) do
+        line:adjustOrbSpeed(spellArray, orbArray, orbTable)
     end
 
     if heldSquare then
