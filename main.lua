@@ -38,6 +38,8 @@ function resetGame()
 
     baseSpeed = 100
 
+    minSpawnTime = 1
+
     girdXOffset = (windowWidth - gridSize*gridWidth) / 2
     girdYOffset = (windowHeight - gridSize*gridHeight) / 4
 

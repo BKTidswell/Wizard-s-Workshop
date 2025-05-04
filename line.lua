@@ -13,6 +13,7 @@ function Line:new(x, y, angle, kind, img)
     obj.kind = kind
     obj.img = img
     obj.rads = angle / 180 * math.pi
+    obj.sinceSpawn = 999
 
     if kind == "hLine" then
         obj.dx = baseSpeed
@@ -80,20 +81,30 @@ function Line:spawnOrbs(spellGrid, orbGrid, orbTable)
             -- First see if we spawn an orb
             if spellGrid[checkX][checkY]:Iam() == "Spawner" and orbGrid[checkX][checkY] == nil and orbGrid[self.gridX][self.gridY] == nil then
 
-                orbX = (checkX - 1) * gridSize + girdXOffset + -1*locs.x*gridSize*0.5
-                orbY = (checkY - 1) * gridSize + girdYOffset + -1*locs.y*gridSize*0.5
+                -- Make sure nothing has been spawned too soon
+                if self.sinceSpawn >= minSpawnTime then
+                    orbX = (checkX - 1) * gridSize + girdXOffset + -1*locs.x*gridSize*0.5
+                    orbY = (checkY - 1) * gridSize + girdYOffset + -1*locs.y*gridSize*0.5
 
-                if i == 1 then
-                    xSpeed = self.dx
-                    ySpeed = self.dy
-                elseif i == 2 then
-                    xSpeed = -1*self.dx
-                    ySpeed = -1*self.dy
+                    if i == 1 then
+                        xSpeed = self.dx
+                        ySpeed = self.dy
+                    elseif i == 2 then
+                        xSpeed = -1*self.dx
+                        ySpeed = -1*self.dy
+                    else
+                        print("Help something is wrong")
+                    end
+
+                    orbTable = spellGrid[checkX][checkY]:addOrb(orbX, orbY, xSpeed, ySpeed, orbTable)
+                    self.sinceSpawn = 0
+
+                -- Otherwise tick up the counter
                 else
-                    print("Help something is wrong")
-                end
 
-                orbTable = spellGrid[checkX][checkY]:addOrb(orbX, orbY, xSpeed, ySpeed, orbTable)
+                    self.sinceSpawn = self.sinceSpawn + love.timer.getDelta()
+
+                end
             end
         end
     end
@@ -155,49 +166,6 @@ function Line:adjustOrbSpeed(spellGrid, orbGrid, orbTable)
 
         end
     end
-
-
-    -- for i, locs in ipairs(self.toCheck) do
-
-    --     checkX = self.gridX + locs.x
-    --     checkY = self.gridY + locs.y
-
-    --     -- check that we are on the grid and that there is an orb there.
-    --     if checkX >= 0 and checkX <= gridWidth and checkY >= 0 and checkY <= gridHeight and spellGrid[checkX] and spellGrid[checkX][checkY] and orbGrid[checkX][checkY] then
-
-    --         currOrb = orbGrid[checkX][checkY]
-    --         -- next check if the orb will be on us in the next timestep
-    --         orbNextX = currOrb.x + gridSize + (currOrb.dx * 0.01)
-    --         orbNextY = currOrb.y + gridSize/2 + (currOrb.dy * 0.01)
-
-    --         print(love.timer.getDelta())
-    --         print(love.timer.getDelta())
-
-    --         print(self.kind, orbNextX, orbNextY, self.x, self.x+gridSize, self.y, self.y+gridSize)
-
-
-    --         if orbNextX >= self.x and orbNextX <= self.x+gridSize and orbNextY >= self.y and orbNextY <= self.y+gridSize then
-
-    --             -- then check to see that the orb is entering from the correct direction
-    --             -- if (math.sign(currOrb.dx * locs.x) == -1 or (currOrb.dx == 0 and locs.x == 0)) and (math.sign(currOrb.dy * locs.y) == -1 or (currOrb.dy == 0 and locs.y == 0)) then
-
-    --                 -- print(self.kind, self.legalConnects[i][1],self.legalConnects[i][2],self.legalConnects[i][3], spellGrid[checkX][checkY].fullKind)
-
-    --                 -- -- now check to see if the square that you are coming from is a legal one
-    --                 -- if in_tbl(self.legalConnects[i], spellGrid[checkX][checkY].fullKind) then
-
-
-
-    --                 -- -- if not legal then remove orb
-    --                 -- else
-    --                 --     currOrb.x = -2*gridSize
-    --                 --     currOrb.y = -2*gridSize
-
-    --                 -- end
-    --             -- end
-    --         end
-    --     end
-    -- end
 end
 
 function Line:Iam()
