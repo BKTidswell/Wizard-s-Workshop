@@ -34,27 +34,50 @@ end
 function Combiner:combine(spellGrid, orbGrid, orbTable)
 
     orbCheck = {false, false}
-    storedOrbs = {0, 0}
+    storedOrbs = {nil, nil}
 
-    for i, locs in ipairs(self.toCheck) do
+    -- First look at orbs on the current square
+    for _, currOrb in ipairs(orbGrid[self.gridX][self.gridY]) do
 
-        checkX = self.gridX + locs.x
-        checkY = self.gridY + locs.y
+        orbLastGridX = math.floor((currOrb.x - girdXOffset + gridSize/2 - (currOrb.dx * love.timer.getDelta() * 10)) / gridSize) + 1
+        orbLastGridY = math.floor((currOrb.y - girdYOffset + gridSize/2 - (currOrb.dy * love.timer.getDelta() * 10)) / gridSize) + 1
 
-        -- First deal with orbs and check that there is an orb there
-        if checkX >= 0 and checkX <= gridWidth and checkY >= 0 and checkY <= gridHeight and spellGrid[checkX] and spellGrid[checkX][checkY] then
+        orbNextGridX = math.floor((currOrb.x - girdXOffset + gridSize/2 + (currOrb.dx * love.timer.getDelta() * 10)) / gridSize) + 1
+        orbNextGridY = math.floor((currOrb.y - girdYOffset + gridSize/2 + (currOrb.dy * love.timer.getDelta() * 10)) / gridSize) + 1
 
-            -- now check if there is the correct orb
-            if orbGrid[checkX][checkY] then
+        -- Okay so if they just came from another grid space then we combine them
+        if orbLastGridX ~= self.gridX or orbLastGridY ~= self.gridY then
+        
+            legalEntrance = false
+            entranceNum = nil
 
-                if orbGrid[checkX][checkY].kind == self.intakes[i] then
-                    orbCheck[i] = true
-                    storedOrbs[i] = orbGrid[checkX][checkY]
-                else
-                    orbGrid[checkX][checkY].x = -2*gridSize
-                    orbGrid[checkX][checkY].y = -2*gridSize
+            -- if the square that the grid came from isn't a legal connection then remove the orb
+            for i, locs in ipairs(self.toCheck) do
+
+                checkX = self.gridX + locs.x
+                checkY = self.gridY + locs.y
+
+                if orbLastGridX == checkX and orbLastGridY == checkY then
+                    legalEntrance = true
+                    entranceNum = i
                 end
             end
+
+            -- remove the orb here
+            if not legalEntrance or currOrb.kind ~= self.intakes[entranceNum] then
+                currOrb.x = -2*gridSize
+                currOrb.y = -2*gridSize
+
+            -- otherwise we note that it's the right orb and check the other orb
+            else
+                orbCheck[entranceNum] = true
+                storedOrbs[entranceNum] = currOrb
+            end
+        -- If they are about to leave we remove them
+        -- But not if it's our own color
+        elseif (orbNextGridX ~= self.gridX or orbNextGridY ~= self.gridY) and currOrb.kind ~= self.output then
+            currOrb.x = -2*gridSize
+            currOrb.y = -2*gridSize
         end
     end
 
@@ -69,7 +92,6 @@ function Combiner:combine(spellGrid, orbGrid, orbTable)
 
         storedOrbs[2].x = -2*gridSize
         storedOrbs[2].y = -2*gridSize
-
     end
 end
 

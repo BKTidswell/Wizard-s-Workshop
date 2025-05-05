@@ -42,7 +42,7 @@ function resetGame()
 
     baseSpeed = 100
 
-    minSpawnTime = 0.25
+    minSpawnTime = 1
 
     girdXOffset = (windowWidth - gridSize*gridWidth) / 2
     girdYOffset = (windowHeight - gridSize*gridHeight) / 4
@@ -124,7 +124,7 @@ function updateOrbGrid(orbList, spellGrid)
     for x = 1, gridWidth do
         orbOut[x] = {}
         for y = 1, gridHeight do
-            orbOut[x][y] = nil
+            orbOut[x][y] = {}
         end
     end
 
@@ -138,11 +138,11 @@ function updateOrbGrid(orbList, spellGrid)
         elseif spellGrid[gridX][gridY]:is(Cauldron) then
                 score = score + spellGrid[gridX][gridY]:returnValue(orb.kind)
                 table.remove(orbList, i)
-        elseif orbOut[gridX] and orbOut[gridX][gridY] then
-            orb.x = -2*gridSize
-            orb.y = -2*gridSize
+        -- elseif orbOut[gridX] and orbOut[gridX][gridY] then
+        --     orb.x = -2*gridSize
+        --     orb.y = -2*gridSize
         else
-            orbOut[gridX][gridY] = orbList[i]
+            table.insert(orbOut[gridX][gridY], orb)
         end
     end
 

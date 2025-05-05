@@ -79,7 +79,7 @@ function Line:spawnOrbs(spellGrid, orbGrid, orbTable)
         if checkX >= 0 and checkX <= gridWidth and checkY >= 0 and checkY <= gridHeight and spellGrid[checkX] and spellGrid[checkX][checkY] then
 
             -- First see if we spawn an orb
-            if spellGrid[checkX][checkY]:Iam() == "Spawner" and orbGrid[checkX][checkY] == nil and orbGrid[self.gridX][self.gridY] == nil then
+            if spellGrid[checkX][checkY]:Iam() == "Spawner" and orbGrid[checkX][checkY][1] == nil then
 
                 -- Make sure nothing has been spawned too soon
                 if self.sinceSpawn >= minSpawnTime then
@@ -115,9 +115,7 @@ function Line:adjustOrbSpeed(spellGrid, orbGrid, orbTable)
     -- holding off on all that, since we want to check what the orbs are doing no matter where they are coming from
 
     -- So first check if there is an orb on our square
-    if orbGrid[self.gridX][self.gridY] then
-
-        currOrb = orbGrid[self.gridX][self.gridY]
+    for _, currOrb in ipairs(orbGrid[self.gridX][self.gridY]) do
 
         orbNowGridX = math.floor((currOrb.x - girdXOffset + gridSize/2) / gridSize) + 1
         orbNowGridY = math.floor((currOrb.y - girdYOffset + gridSize/2) / gridSize) + 1
@@ -162,8 +160,6 @@ function Line:adjustOrbSpeed(spellGrid, orbGrid, orbTable)
                 end
                 
             end
-
-
         end
     end
 end
