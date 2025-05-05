@@ -276,33 +276,38 @@ function love.mousemoved(x, y, dx, dy, istouch)
         if gridX ~= lastX or gridY ~= lastY then
             -- Check which way we are dragging the line
             -- First we do horizontal 
-            if gridY == lastY and yDir == 0 and not safeChecker(spellArray, lastX, lastY, Spawner) and not safeChecker(spellArray, lastX, lastY, Cauldron) and not safeChecker(spellArray, lastX, lastY, Combiner) and lastLine ~= "vLine" then
-                spellArray[lastX][lastY] = Line:new((lastX-1) * gridSize + girdXOffset + gridSize/2, 
-                                                    (lastY-1) * gridSize + girdYOffset + gridSize/2,
-                                                    0, "hLine", hLine)
-                 table.insert(lineTable, spellArray[lastX][lastY])
+            if gridY == lastY and yDir == 0 and lastLine ~= "vLine" then
+                if not safeChecker(spellArray, lastX, lastY, Spawner) and not safeChecker(spellArray, lastX, lastY, Cauldron) and not safeChecker(spellArray, lastX, lastY, Combiner) then 
+                    spellArray[lastX][lastY] = Line:new((lastX-1) * gridSize + girdXOffset + gridSize/2, 
+                                                        (lastY-1) * gridSize + girdYOffset + gridSize/2,
+                                                        0, "hLine", hLine)
+                    table.insert(lineTable, spellArray[lastX][lastY])
+                end
 
                 dragLastGrid = {x = gridX, y = gridY, xDir = gridX-lastX, yDir = gridY-lastY, lastLine = "hLine"}
 
             -- -- Then vertical
-            elseif gridX == lastX and xDir == 0 and not safeChecker(spellArray, lastX, lastY, Spawner) and not safeChecker(spellArray, lastX, lastY, Cauldron) and not safeChecker(spellArray, lastX, lastY, Combiner) and lastLine ~= "hLine" then
-                spellArray[lastX][lastY] = Line:new((lastX-1) * gridSize + girdXOffset + gridSize/2, 
-                                                    (lastY-1) * gridSize + girdYOffset + gridSize/2,
-                                                    0, "vLine", vLine)
-                table.insert(lineTable, spellArray[lastX][lastY])
+            elseif gridX == lastX and xDir == 0 and lastLine ~= "hLine" then
+                if not safeChecker(spellArray, lastX, lastY, Spawner) and not safeChecker(spellArray, lastX, lastY, Cauldron) and not safeChecker(spellArray, lastX, lastY, Combiner) then 
+                    spellArray[lastX][lastY] = Line:new((lastX-1) * gridSize + girdXOffset + gridSize/2, 
+                                                        (lastY-1) * gridSize + girdYOffset + gridSize/2,
+                                                        0, "vLine", vLine)
+                    table.insert(lineTable, spellArray[lastX][lastY])
+                end
 
                 dragLastGrid = {x = gridX, y = gridY, xDir = gridX-lastX, yDir = gridY-lastY, lastLine = "vLine"}
 
             -- -- Then we check for curved
-            elseif not safeChecker(spellArray, lastX, lastY, Spawner) and not safeChecker(spellArray, lastX, lastY, Cauldron) and not safeChecker(spellArray, lastX, lastY, Combiner) then
+            else
+                if not safeChecker(spellArray, lastX, lastY, Spawner) and not safeChecker(spellArray, lastX, lastY, Cauldron) and not safeChecker(spellArray, lastX, lastY, Combiner) then
+                    local angle = cLineAngle(gridX-lastX, gridY-lastY, xDir, yDir)
 
-                local angle = cLineAngle(gridX-lastX, gridY-lastY, xDir, yDir)
+                    spellArray[lastX][lastY] = Line:new((lastX-1) * gridSize + girdXOffset + gridSize/2, 
+                                                        (lastY-1) * gridSize + girdYOffset + gridSize/2,
+                                                        angle, "cLine", cLine)
 
-                spellArray[lastX][lastY] = Line:new((lastX-1) * gridSize + girdXOffset + gridSize/2, 
-                                                    (lastY-1) * gridSize + girdYOffset + gridSize/2,
-                                                    angle, "cLine", cLine)
-
-                table.insert(lineTable, spellArray[lastX][lastY])
+                    table.insert(lineTable, spellArray[lastX][lastY])
+                end
 
                 dragLastGrid = {x = gridX, y = gridY, xDir = gridX-lastX, yDir = gridY-lastY, lastLine = "cLine"}
             end
