@@ -39,14 +39,14 @@ function Combiner:combine(spellGrid, orbGrid, orbTable)
     -- First look at orbs on the current square
     for _, currOrb in ipairs(orbGrid[self.gridX][self.gridY]) do
 
-        orbLastGridX = math.floor((currOrb.x - girdXOffset + gridSize/2 - (currOrb.dx * love.timer.getDelta() * 10)) / gridSize) + 1
-        orbLastGridY = math.floor((currOrb.y - girdYOffset + gridSize/2 - (currOrb.dy * love.timer.getDelta() * 10)) / gridSize) + 1
+        orbLastGridX = math.floor((currOrb.x - girdXOffset + gridSize/2 - (currOrb.dx * love.timer.getDelta() * 30)) / gridSize) + 1
+        orbLastGridY = math.floor((currOrb.y - girdYOffset + gridSize/2 - (currOrb.dy * love.timer.getDelta() * 30)) / gridSize) + 1
 
-        orbNextGridX = math.floor((currOrb.x - girdXOffset + gridSize/2 + (currOrb.dx * love.timer.getDelta() * 10)) / gridSize) + 1
-        orbNextGridY = math.floor((currOrb.y - girdYOffset + gridSize/2 + (currOrb.dy * love.timer.getDelta() * 10)) / gridSize) + 1
+        orbNextGridX = math.floor((currOrb.x - girdXOffset + gridSize/2 + (currOrb.dx * love.timer.getDelta() * 1)) / gridSize) + 1
+        orbNextGridY = math.floor((currOrb.y - girdYOffset + gridSize/2 + (currOrb.dy * love.timer.getDelta() * 1)) / gridSize) + 1
 
         -- Okay so if they just came from another grid space then we combine them
-        if orbLastGridX ~= self.gridX or orbLastGridY ~= self.gridY then
+        if (orbLastGridX ~= self.gridX or orbLastGridY ~= self.gridY) and currOrb.kind ~= self.output then
         
             legalEntrance = false
             entranceNum = nil
@@ -64,9 +64,11 @@ function Combiner:combine(spellGrid, orbGrid, orbTable)
             end
 
             -- remove the orb here
-            if not legalEntrance or currOrb.kind ~= self.intakes[entranceNum] then
+            if (not legalEntrance or currOrb.kind ~= self.intakes[entranceNum]) then
                 currOrb.x = -2*gridSize
                 currOrb.y = -2*gridSize
+
+                print(currOrb.kind)
 
             -- otherwise we note that it's the right orb and check the other orb
             else

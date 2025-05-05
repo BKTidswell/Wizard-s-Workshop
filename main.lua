@@ -225,7 +225,7 @@ end
 function love.keypressed(key, scancode, isrepeat)
     if key == "x" then
       heldSquare = nil
-    elseif key == "r" then
+    elseif key == "r" and heldSquare then
       heldSquare:turn()
    end
 end
