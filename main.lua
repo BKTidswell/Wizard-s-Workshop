@@ -4,6 +4,7 @@ require "orb"
 require "line"
 require "spawner"
 require "cauldron"
+require "combiner"
 
 function love.load()
     resetGame()
@@ -14,12 +15,16 @@ function resetGame()
     greenSqr = love.graphics.newImage("imgs/green_sqr.png")
     redCirc = love.graphics.newImage("imgs/red_circ.png")
     greenCirc = love.graphics.newImage("imgs/green_circ.png")
+    yellowCirc = love.graphics.newImage("imgs/yellow_circ.png")
     cauldron = love.graphics.newImage("imgs/cauldron.png")
+    combiner = love.graphics.newImage("imgs/combiner.png")
     hLine = love.graphics.newImage("imgs/h_line.png")
     vLine = love.graphics.newImage("imgs/v_line.png")
     cLine = love.graphics.newImage("imgs/c_line.png")
 
     orbTable = {}
+    lineTable = {}
+    combinerTable = {}
     score = 0  -- Initialize score
 
     -- Create a larger font for the score
@@ -35,19 +40,20 @@ function resetGame()
     gridWidth = 10
     gridHeight = 9
 
+    baseSpeed = 100
+
+    minSpawnTime = 0.25
+
     girdXOffset = (windowWidth - gridSize*gridWidth) / 2
     girdYOffset = (windowHeight - gridSize*gridHeight) / 4
 
     -- Create a grid to hold squares
     spellArray = {}
-    blankOrbArray = {}
 
     for x = 1, gridWidth do
         spellArray[x] = {}
-        blankOrbArray[x] = {}
         for y = 1, gridHeight do
             spellArray[x][y] = nil
-            blankOrbArray[x][y] = nil
         end
     end
 
@@ -67,6 +73,13 @@ function resetGame()
 
     isDraggingLine = false
     dragStartGrid = nil
+
+
+    holdingArray = {}
+
+    table.insert(holdingArray, Combiner:new(girdXOffset+gridSize, girdYOffset+gridSize*(gridHeight+2), 0, {"red", "green"}, "yellow", combiner))
+
+
 end
 
 function myround(x, base)
@@ -83,17 +96,38 @@ function safeChecker(grid, x, y, obj)
     return grid[x] and grid[x][y] and grid[x][y]:is(obj)
 end
 
-function updateGrid(spellGrid, orbList)
-    local orbGrid = {}
+function cLineAngle(x1, y1, x2, y2)
+    local dx = x1 - x2
+    local dy = y1 - y2
+    local angle = math.deg(math.atan2(dy, dx)) + 45
+    if angle < 0 then
+        angle = angle + 360
+    end
+    return angle
+end
+
+function in_tbl(tbl, x)
+    found = false
+    for _, v in pairs(tbl) do
+        if v == x then 
+            found = true 
+        end
+    end
+    return found
+end
+
+
+function updateOrbGrid(orbList, spellGrid)
+
+    local orbOut = {}
 
     for x = 1, gridWidth do
-        orbGrid[x] = {}
+        orbOut[x] = {}
         for y = 1, gridHeight do
-            orbGrid[x][y] = nil
+            orbOut[x][y] = nil
         end
     end
 
-    -- Check for orb collisions with cauldron
     for i = #orbList, 1, -1 do
         local orb = orbList[i]
         local gridX = math.floor((orb.x - girdXOffset + gridSize/2) / gridSize) + 1
@@ -101,83 +135,18 @@ function updateGrid(spellGrid, orbList)
 
         if gridX > gridWidth or gridX < 0 or gridY > gridHeight or gridY < 0 or spellGrid[gridX] == nil or spellGrid[gridX][gridY] == nil then
             table.remove(orbList, i)
+        elseif spellGrid[gridX][gridY]:is(Cauldron) then
+                score = score + spellGrid[gridX][gridY]:returnValue(orb.kind)
+                table.remove(orbList, i)
+        elseif orbOut[gridX] and orbOut[gridX][gridY] then
+            orb.x = -2*gridSize
+            orb.y = -2*gridSize
         else
-            curSqr = spellGrid[gridX][gridY]
-
-            if orb.lastSqr == "hLine" and curSqr:is(Line) and curSqr.kind == "vLine" then
-                table.remove(orbList, i)
-            elseif orb.lastSqr == "vLine" and curSqr:is(Line) and curSqr.kind == "hLine" then
-                table.remove(orbList, i)
-            elseif curSqr:is(Cauldron) then
-                score = score + curSqr:returnValue(orb.kind)
-                table.remove(orbList, i)
-            else 
-                orbGrid[gridX][gridY] = "Orb"
-                
-
-                if curSqr:is(Line) and curSqr.kind ~= "cLine" then
-                    orb.dx = curSqr.dx * math.sign(orb.dx)
-                    orb.dy = curSqr.dy * math.sign(orb.dy)
-                    orb.lastSqr = curSqr.kind
-
-                elseif curSqr:is(Line) and curSqr.kind == "cLine" then
-                    orb.dx = curSqr.dx
-                    orb.dy = curSqr.dy
-                    orb.lastSqr = curSqr.kind
-                end
-            end
+            orbOut[gridX][gridY] = orbList[i]
         end
     end
 
-    for x = 1, gridWidth do
-        for y = 1, gridHeight do
-
-            curSqr = spellGrid[x][y]
-            curOrb = orbGrid[x][y]
-
-            if curSqr ~= nil then
-                if curSqr:is(Line) then
-
-                    if curSqr.kind == "hLine" and safeChecker(spellGrid, x-1, y, Spawner) and orbGrid[x-1][y] == nil and curOrb == nil then
-
-                        orbX = (x - 2) * gridSize + girdXOffset
-                        orbY = (y - 1) * gridSize + girdYOffset
-                        local spawnerKind = spellGrid[x-1][y].kind
-                        local orbImage = spawnerKind == "red" and redCirc or greenCirc
-
-                        orbTable = spellGrid[x-1][y]:addOrb(orbX, orbY, curSqr.dx, curSqr.dy,orbTable)
-
-                    elseif curSqr.kind == "hLine" and safeChecker(spellGrid, x+1, y, Spawner) and orbGrid[x+1][y] == nil and curOrb == nil  then
-
-                        orbX = (x) * gridSize + girdXOffset
-                        orbY = (y - 1) * gridSize + girdYOffset
-                        local spawnerKind = spellGrid[x+1][y].kind
-                        local orbImage = spawnerKind == "red" and redCirc or greenCirc
-
-                        orbTable = spellGrid[x+1][y]:addOrb(orbX, orbY, -1*curSqr.dx, curSqr.dy,orbTable)
-
-                    elseif curSqr.kind == "vLine" and safeChecker(spellGrid, x, y-1, Spawner) and orbGrid[x][y-1] == nil and curOrb == nil  then
-
-                        orbX = (x - 1) * gridSize + girdXOffset
-                        orbY = (y - 2) * gridSize + girdYOffset
-                        local spawnerKind = spellGrid[x][y-1].kind
-                        local orbImage = spawnerKind == "red" and redCirc or greenCirc
-
-                        orbTable = spellGrid[x][y-1]:addOrb(orbX, orbY, curSqr.dx, curSqr.dy,orbTable)
-
-                    elseif curSqr.kind == "vLine" and safeChecker(spellGrid, x, y+1, Spawner) and orbGrid[x][y+1] == nil and curOrb == nil  then
-
-                        orbX = (x - 1) * gridSize + girdXOffset
-                        orbY = (y) * gridSize + girdYOffset
-                        local spawnerKind = spellGrid[x][y+1].kind
-                        local orbImage = spawnerKind == "red" and redCirc or greenCirc
-
-                        orbTable = spellGrid[x][y+1]:addOrb(orbX, orbY, curSqr.dx, -1*curSqr.dy,orbTable)
-                    end
-                end
-            end
-        end
-    end
+    return orbOut
 end
 
 dtotal = 0
@@ -187,13 +156,25 @@ function love.update(dt)
         orb:move()
     end
 
+    orbArray = updateOrbGrid(orbTable, spellArray)
+
+    for _, line in ipairs(lineTable) do
+        line:spawnOrbs(spellArray, orbArray, orbTable)
+    end
+
+    for _, line in ipairs(lineTable) do
+        line:adjustOrbSpeed(spellArray, orbArray, orbTable)
+    end
+
+     for _, combiner in ipairs(combinerTable) do
+        combiner:combine(spellArray, orbArray, orbTable)
+    end
+
     if heldSquare then
         -- Follow mouse if holding a square
         heldSquare.x = love.mouse.getX()
         heldSquare.y = love.mouse.getY()
     end
-
-    updateGrid(spellArray, orbTable)
 end
 
 function love.draw()
@@ -219,11 +200,15 @@ function love.draw()
     -- Draw held square
     if heldSquare then
         love.graphics.setColor(255,255,255,255)
-        love.graphics.draw(heldSquare.img, heldSquare.x - 20, heldSquare.y - 20)
+        heldSquare:draw()
     end
 
     for _, orb in ipairs(orbTable) do
         orb:draw()
+    end
+
+    for _, item in ipairs(holdingArray) do
+        item:draw()
     end
 
     -- Draw score
@@ -237,15 +222,41 @@ function love.draw()
     love.graphics.setFont(defaultFont)  -- Reset to default font
 end
 
+function love.keypressed(key, scancode, isrepeat)
+    if key == "x" then
+      heldSquare = nil
+    elseif key == "r" then
+      heldSquare:turn()
+   end
+end
+
 function love.mousepressed(x, y, button)
     if button == 1 then -- Left mouse button
+
+            -- Check for dragging on grid
             local gridX = math.floor((x - girdXOffset) / gridSize) + 1
             local gridY = math.floor((y - girdYOffset) / gridSize) + 1
 
             if gridX >= 1 and gridX <= gridWidth and gridY >= 1 and gridY <= gridHeight then
-                dragLastGrid = {x = gridX, y = gridY, xDir = 0, yDir = 0, lastLine = nil}
-                isDraggingLine = true
+                if not heldSquare then
+                    dragLastGrid = {x = gridX, y = gridY, xDir = 0, yDir = 0, lastLine = nil}
+                    isDraggingLine = true
+                else
+                    spellArray[gridX][gridY] = Combiner:new((gridX-1) * gridSize + girdXOffset + gridSize/2, 
+                                                            (gridY-1) * gridSize + girdYOffset + gridSize/2, 
+                                                            heldSquare.rads, heldSquare.intakes, heldSquare.output, heldSquare.img)
+                    table.insert(combinerTable, spellArray[gridX][gridY])
+                    heldSquare = nil
+                end
             end
+
+            -- Then check for item picked up
+            for i, item in ipairs(holdingArray) do
+                if x >= item.x-gridSize/2 and x <= item.x+gridSize/2 and y >= item.y-gridSize/2 and y <= item.y+gridSize/2 then
+                    heldSquare = Combiner:new(item.x, item.y, item.rads, item.intakes, item.output, item.img)
+                end
+            end
+
     end
 end
 
@@ -265,83 +276,35 @@ function love.mousemoved(x, y, dx, dy, istouch)
         if gridX ~= lastX or gridY ~= lastY then
             -- Check which way we are dragging the line
             -- First we do horizontal 
-            if gridY == lastY and yDir == 0 and not safeChecker(spellArray, lastX, lastY, Spawner) and not safeChecker(spellArray, lastX, lastY, Cauldron) and lastLine ~= "vLine" then
+            if gridY == lastY and yDir == 0 and not safeChecker(spellArray, lastX, lastY, Spawner) and not safeChecker(spellArray, lastX, lastY, Cauldron) and not safeChecker(spellArray, lastX, lastY, Combiner) and lastLine ~= "vLine" then
                 spellArray[lastX][lastY] = Line:new((lastX-1) * gridSize + girdXOffset + gridSize/2, 
                                                     (lastY-1) * gridSize + girdYOffset + gridSize/2,
-                                                    0, 100, 0, "hLine", hLine)
+                                                    0, "hLine", hLine)
+                 table.insert(lineTable, spellArray[lastX][lastY])
+
                 dragLastGrid = {x = gridX, y = gridY, xDir = gridX-lastX, yDir = gridY-lastY, lastLine = "hLine"}
 
             -- -- Then vertical
-            elseif gridX == lastX and xDir == 0 and not safeChecker(spellArray, lastX, lastY, Spawner) and not safeChecker(spellArray, lastX, lastY, Cauldron) and lastLine ~= "hLine" then
+            elseif gridX == lastX and xDir == 0 and not safeChecker(spellArray, lastX, lastY, Spawner) and not safeChecker(spellArray, lastX, lastY, Cauldron) and not safeChecker(spellArray, lastX, lastY, Combiner) and lastLine ~= "hLine" then
                 spellArray[lastX][lastY] = Line:new((lastX-1) * gridSize + girdXOffset + gridSize/2, 
                                                     (lastY-1) * gridSize + girdYOffset + gridSize/2,
-                                                    0, 0, 100, "vLine", vLine)
+                                                    0, "vLine", vLine)
+                table.insert(lineTable, spellArray[lastX][lastY])
+
                 dragLastGrid = {x = gridX, y = gridY, xDir = gridX-lastX, yDir = gridY-lastY, lastLine = "vLine"}
 
             -- -- Then we check for curved
-            elseif gridX == lastX and gridY > lastY and xDir > 0 and not safeChecker(spellArray, lastX, lastY, Spawner) and not safeChecker(spellArray, lastX, lastY, Cauldron) then
+            elseif not safeChecker(spellArray, lastX, lastY, Spawner) and not safeChecker(spellArray, lastX, lastY, Cauldron) and not safeChecker(spellArray, lastX, lastY, Combiner) then
+
+                local angle = cLineAngle(gridX-lastX, gridY-lastY, xDir, yDir)
+
                 spellArray[lastX][lastY] = Line:new((lastX-1) * gridSize + girdXOffset + gridSize/2, 
                                                     (lastY-1) * gridSize + girdYOffset + gridSize/2,
-                                                    180, 100, 100, "cLine", cLine)
+                                                    angle, "cLine", cLine)
+
+                table.insert(lineTable, spellArray[lastX][lastY])
+
                 dragLastGrid = {x = gridX, y = gridY, xDir = gridX-lastX, yDir = gridY-lastY, lastLine = "cLine"}
-
-                print("Made Type 1")
-
-            elseif gridX == lastX and gridY > lastY and xDir < 0 and not safeChecker(spellArray, lastX, lastY, Spawner) and not safeChecker(spellArray, lastX, lastY, Cauldron) then
-                spellArray[lastX][lastY] = Line:new((lastX-1) * gridSize + girdXOffset + gridSize/2, 
-                                                    (lastY-1) * gridSize + girdYOffset + gridSize/2,
-                                                    90, -100, 100, "cLine", cLine)
-                dragLastGrid = {x = gridX, y = gridY, xDir = gridX-lastX, yDir = gridY-lastY, lastLine = "cLine"}
-
-                print("Made Type 2")
-
-            elseif gridX == lastX and gridY < lastY and xDir > 0 and not safeChecker(spellArray, lastX, lastY, Spawner) and not safeChecker(spellArray, lastX, lastY, Cauldron) then
-                spellArray[lastX][lastY] = Line:new((lastX-1) * gridSize + girdXOffset + gridSize/2, 
-                                                    (lastY-1) * gridSize + girdYOffset + gridSize/2,
-                                                    270, 100, -100, "cLine", cLine)
-                dragLastGrid = {x = gridX, y = gridY, xDir = gridX-lastX, yDir = gridY-lastY, lastLine = "cLine"}
-
-                print("Made Type 3")
-
-            elseif gridX == lastX and gridY < lastY and xDir < 0 and not safeChecker(spellArray, lastX, lastY, Spawner) and not safeChecker(spellArray, lastX, lastY, Cauldron) then
-                spellArray[lastX][lastY] = Line:new((lastX-1) * gridSize + girdXOffset + gridSize/2, 
-                                                    (lastY-1) * gridSize + girdYOffset + gridSize/2,
-                                                    0, -100, -100, "cLine", cLine)
-                dragLastGrid = {x = gridX, y = gridY, xDir = gridX-lastX, yDir = gridY-lastY, lastLine = "cLine"}
-
-                print("Made Type 4")
-
-            elseif gridY == lastY and gridX > lastX and yDir > 0 and not safeChecker(spellArray, lastX, lastY, Spawner) and not safeChecker(spellArray, lastX, lastY, Cauldron) then
-                spellArray[lastX][lastY] = Line:new((lastX-1) * gridSize + girdXOffset + gridSize/2, 
-                                                    (lastY-1) * gridSize + girdYOffset + gridSize/2,
-                                                    0, 100, 100, "cLine", cLine)
-                dragLastGrid = {x = gridX, y = gridY, xDir = gridX-lastX, yDir = gridY-lastY, lastLine = "cLine"}
-
-                print("Made Type 5")
-
-            elseif gridY == lastY and gridX > lastX and yDir < 0 and not safeChecker(spellArray, lastX, lastY, Spawner) and not safeChecker(spellArray, lastX, lastY, Cauldron) then
-                spellArray[lastX][lastY] = Line:new((lastX-1) * gridSize + girdXOffset + gridSize/2, 
-                                                    (lastY-1) * gridSize + girdYOffset + gridSize/2,
-                                                    90, 100, -100, "cLine", cLine)
-                dragLastGrid = {x = gridX, y = gridY, xDir = gridX-lastX, yDir = gridY-lastY, lastLine = "cLine"}
-
-                print("Made Type 6")
-
-            elseif gridY == lastY and gridX < lastX and yDir > 0 and not safeChecker(spellArray, lastX, lastY, Spawner) and not safeChecker(spellArray, lastX, lastY, Cauldron) then
-                spellArray[lastX][lastY] = Line:new((lastX-1) * gridSize + girdXOffset + gridSize/2, 
-                                                    (lastY-1) * gridSize + girdYOffset + gridSize/2,
-                                                    270, -100, 100, "cLine", cLine)
-                dragLastGrid = {x = gridX, y = gridY, xDir = gridX-lastX, yDir = gridY-lastY, lastLine = "cLine"}
-
-                print("Made Type 7")
-
-            elseif gridY == lastY and gridX < lastX and yDir < 0 and not safeChecker(spellArray, lastX, lastY, Spawner) and not safeChecker(spellArray, lastX, lastY, Cauldron) then
-                spellArray[lastX][lastY] = Line:new((lastX-1) * gridSize + girdXOffset + gridSize/2, 
-                                                    (lastY-1) * gridSize + girdYOffset + gridSize/2,
-                                                    180, -100, -100, "cLine", cLine)
-                dragLastGrid = {x = gridX, y = gridY, xDir = gridX-lastX, yDir = gridY-lastY, lastLine = "cLine"}    
-
-                print("Made Type 8")
             end
         end
     end

@@ -28,6 +28,10 @@ function Spawner:draw()
     love.graphics.draw(self.img, self.x, self.y)
 end
 
+function Spawner:Iam()
+    return "Spawner"
+end
+
 function Spawner:is(Type)
     local mt = getmetatable(self)
     if mt == Type then

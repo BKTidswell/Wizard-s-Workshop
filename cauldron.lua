@@ -9,7 +9,7 @@ function Cauldron:new(x, y, img)
     obj.y = y
     obj.img = img
 
-    obj.valueTbl = {red = 1, green = 2}
+    obj.valueTbl = {red = 1, green = 2, yellow = 5}
 
     return obj
 end
@@ -20,6 +20,10 @@ end
 
 function Cauldron:returnValue(orbType)
     return self.valueTbl[orbType]
+end
+
+function Cauldron:Iam()
+    return "Cauldron"
 end
 
 function Cauldron:is(Type)
