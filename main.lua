@@ -116,6 +116,15 @@ function in_tbl(tbl, x)
     return found
 end
 
+function lineCleanUp(tbl, x, y) 
+    for i = #tbl, 1, -1 do
+        local lineSeg = tbl[i]
+
+        if lineSeg.gridX == x and lineSeg.gridY == y then
+            table.remove(tbl, i)
+        end    
+    end    
+end
 
 function updateOrbGrid(orbList, spellGrid)
 
@@ -136,11 +145,8 @@ function updateOrbGrid(orbList, spellGrid)
         if gridX > gridWidth or gridX < 0 or gridY > gridHeight or gridY < 0 or spellGrid[gridX] == nil or spellGrid[gridX][gridY] == nil then
             table.remove(orbList, i)
         elseif spellGrid[gridX][gridY]:is(Cauldron) then
-                score = score + spellGrid[gridX][gridY]:returnValue(orb.kind)
-                table.remove(orbList, i)
-        -- elseif orbOut[gridX] and orbOut[gridX][gridY] then
-        --     orb.x = -2*gridSize
-        --     orb.y = -2*gridSize
+            score = score + spellGrid[gridX][gridY]:returnValue(orb.kind)
+            table.remove(orbList, i)
         else
             table.insert(orbOut[gridX][gridY], orb)
         end
@@ -281,6 +287,7 @@ function love.mousemoved(x, y, dx, dy, istouch)
                     spellArray[lastX][lastY] = Line:new((lastX-1) * gridSize + girdXOffset + gridSize/2, 
                                                         (lastY-1) * gridSize + girdYOffset + gridSize/2,
                                                         0, "hLine", hLine)
+                    lineCleanUp(lineTable, lastX, lastY)
                     table.insert(lineTable, spellArray[lastX][lastY])
                 end
 
@@ -292,6 +299,7 @@ function love.mousemoved(x, y, dx, dy, istouch)
                     spellArray[lastX][lastY] = Line:new((lastX-1) * gridSize + girdXOffset + gridSize/2, 
                                                         (lastY-1) * gridSize + girdYOffset + gridSize/2,
                                                         0, "vLine", vLine)
+                    lineCleanUp(lineTable, lastX, lastY)
                     table.insert(lineTable, spellArray[lastX][lastY])
                 end
 
@@ -305,7 +313,7 @@ function love.mousemoved(x, y, dx, dy, istouch)
                     spellArray[lastX][lastY] = Line:new((lastX-1) * gridSize + girdXOffset + gridSize/2, 
                                                         (lastY-1) * gridSize + girdYOffset + gridSize/2,
                                                         angle, "cLine", cLine)
-
+                    lineCleanUp(lineTable, lastX, lastY)
                     table.insert(lineTable, spellArray[lastX][lastY])
                 end
 
