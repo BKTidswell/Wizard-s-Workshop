@@ -21,6 +21,9 @@ function Spawner:addOrb(x, y, dx, dy, oTable)
     elseif self.kind == "green" then
         table.insert(oTable, Orb:new(x, y, dx, dy, "spawner", "green", greenCirc))
         return oTable
+    elseif self.kind == "yellow" then
+        table.insert(oTable, Orb:new(x, y, dx, dy, "spawner", "yellow", yellowCirc))
+        return oTable
     end
 end
 

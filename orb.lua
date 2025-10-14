@@ -24,7 +24,9 @@ function Orb:move()
 end
 
 function Orb:draw()
-    love.graphics.draw(self.img, self.x, self.y)
+    -- Draw from center of sprite (orb images are 64x64)
+    -- Last two params (32, 32) = origin offset to center
+    love.graphics.draw(self.img, self.x, self.y, 0, 1, 1, 32, 32)
 end
 
 function Orb:is(Type)
