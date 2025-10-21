@@ -113,13 +113,78 @@ function Line:draw()
 
     love.graphics.draw(self.img, self.x, self.y, self.rads, 1, 1, 32, 32)
     love.graphics.setColor(1, 1, 1, 1)  -- Always reset color
+
+    -- PART 1: PERMANENT ARROW OVERLAYS (subtle direction indicators)
+    -- Draw a small, semi-transparent arrow showing flow direction
+    -- This helps players see routing at a glance without debug mode
+
+    -- Calculate center of this grid cell for arrow placement
+    local centerX = (self.gridX - 1) * gridSize + girdXOffset + gridSize / 2
+    local centerY = (self.gridY - 1) * gridSize + girdYOffset + gridSize / 2
+
+    -- Subtle gray color: visible but unobtrusive (50% opacity)
+    local arrowColor = {0.4, 0.4, 0.4, 0.5}
+    local arrowSize = 8  -- Small, unobtrusive size (8 pixels)
+
+    if self.redirects then
+        -- CORNER: Draw single arrow showing OUTPUT direction (Option A: simpler, less clutter)
+        -- Use the first redirect's output direction (both outputs point same way for corners)
+        local outputDir = self.redirects[1].to
+        love.graphics.setColor(arrowColor)
+
+        -- Draw arrow slightly offset toward output direction for clarity
+        local offsetX = centerX + outputDir.dx * 5
+        local offsetY = centerY + outputDir.dy * 5
+
+        -- Calculate arrow angle from direction vector
+        local angle = math.atan2(outputDir.dy, outputDir.dx)
+
+        -- Draw small triangle pointing in output direction
+        local tipX = offsetX + math.cos(angle) * arrowSize
+        local tipY = offsetY + math.sin(angle) * arrowSize
+        local base1X = offsetX + math.cos(angle + 2.5) * (arrowSize * 0.6)
+        local base1Y = offsetY + math.sin(angle + 2.5) * (arrowSize * 0.6)
+        local base2X = offsetX + math.cos(angle - 2.5) * (arrowSize * 0.6)
+        local base2Y = offsetY + math.sin(angle - 2.5) * (arrowSize * 0.6)
+
+        love.graphics.polygon("fill", tipX, tipY, base1X, base1Y, base2X, base2Y)
+
+    else
+        -- STRAIGHT LINE: Single arrow showing flow direction
+        local dirX = 0
+        local dirY = 0
+
+        -- Normalize direction from line velocity
+        if self.dx > 0 then dirX = 1
+        elseif self.dx < 0 then dirX = -1 end
+        if self.dy > 0 then dirY = 1
+        elseif self.dy < 0 then dirY = -1 end
+
+        love.graphics.setColor(arrowColor)
+
+        -- Calculate arrow angle from direction vector
+        local angle = math.atan2(dirY, dirX)
+
+        -- Draw small triangle pointing in flow direction
+        local tipX = centerX + math.cos(angle) * arrowSize
+        local tipY = centerY + math.sin(angle) * arrowSize
+        local base1X = centerX + math.cos(angle + 2.5) * (arrowSize * 0.6)
+        local base1Y = centerY + math.sin(angle + 2.5) * (arrowSize * 0.6)
+        local base2X = centerX + math.cos(angle - 2.5) * (arrowSize * 0.6)
+        local base2Y = centerY + math.sin(angle - 2.5) * (arrowSize * 0.6)
+
+        love.graphics.polygon("fill", tipX, tipY, base1X, base1Y, base2X, base2Y)
+    end
+
+    -- Always reset color after drawing arrows
+    love.graphics.setColor(1, 1, 1, 1)
 end
 
 function Line:spawnOrbs(spellGrid, orbGrid, orbTable)
     -- Safety check: if toCheck is nil, this line wasn't initialized properly
     if not self.toCheck then
         print("WARNING: Line at (" .. self.gridX .. ", " .. self.gridY .. ") has nil toCheck - skipping spawn")
-        return
+        return orbTable  -- CRITICAL: Must return orbTable to prevent breaking the chain!
     end
 
     for i, locs in ipairs(self.toCheck) do
@@ -196,9 +261,11 @@ function Line:adjustOrbSpeedForSingleOrb(orb, orbGridX, orbGridY, lineTable)
         -- 2 lines = 0.6x, 3 lines = 0.4x, 4+ lines = 0.3x
         slowdownMultiplier = math.max(0.3, 1.0 - (linesAtPosition - 1) * 0.2)
 
-        -- DEBUG: Print slowdown info when crossing detected
-        print(string.format("CROSSING at (%d,%d): %d lines, multiplier: %.2f",
-            orbGridX, orbGridY, linesAtPosition, slowdownMultiplier))
+        -- DEBUG: Print slowdown info when crossing detected (only in debug mode)
+        if debugMode then
+            print(string.format("CROSSING at (%d,%d): %d lines, multiplier: %.2f",
+                orbGridX, orbGridY, linesAtPosition, slowdownMultiplier))
+        end
     end
 
     -- Calculate where orb was LAST frame (before this move)
@@ -273,8 +340,8 @@ function Line:adjustOrbSpeedForSingleOrb(orb, orbGridX, orbGridY, lineTable)
                 orb.dx = orb.dx * slowdownMultiplier
                 orb.dy = orb.dy * slowdownMultiplier
 
-                -- DEBUG: Show actual speed after slowdown applied
-                if slowdownMultiplier < 1.0 then
+                -- DEBUG: Show actual speed after slowdown applied (only in debug mode)
+                if debugMode and slowdownMultiplier < 1.0 then
                     print(string.format("  Straight line: speed now (%.1f, %.1f)", orb.dx, orb.dy))
                 end
 
@@ -286,8 +353,8 @@ function Line:adjustOrbSpeedForSingleOrb(orb, orbGridX, orbGridY, lineTable)
             orb.dx = orb.dx * slowdownMultiplier
             orb.dy = orb.dy * slowdownMultiplier
 
-            -- DEBUG: Show actual speed after slowdown applied
-            if slowdownMultiplier < 1.0 then
+            -- DEBUG: Show actual speed after slowdown applied (only in debug mode)
+            if debugMode and slowdownMultiplier < 1.0 then
                 print(string.format("  Perpendicular crossing: speed now (%.1f, %.1f)", orb.dx, orb.dy))
             end
         end
